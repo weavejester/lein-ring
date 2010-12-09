@@ -1,15 +1,13 @@
 (ns leiningen.ring
-  (:require [leiningen.help :as help]))
-
-(defn run [])
-
-(defn war [])
+  (:use [leiningen.help :only (help-for)]
+        [leiningen.ring.server :only (server)]))
 
 (defn ring 
   "Manage a Ring-based application."
-  {:help-arglists '([run war])
-   :subtasks [#'run #'war]}
+  {:help-arglists '([server])
+   :subtasks [#'server]}
   ([project]
-     (println (help/help-for "ring")))
-  ([project subtask]
-     (println "Do something")))
+     (println (help-for "ring")))
+  ([project subtask & args]
+     (case subtask
+       "server" (apply server project args))))
