@@ -41,11 +41,28 @@
     (prxml
       [:web-app
         [:servlet
-          [:servlet-name "TODO"]
-          [:servlet-class "TODO"]]
+          [:servlet-name "war-servlet"]
+          [:servlet-class "deploy.servlet"]]
         [:servlet-mapping
-          [:servlet-name "TODO"]
+          [:servlet-name "war-servlet"]
           [:url-pattern "/*"]]])))
+
+(defn compile-ns [project forms]
+  (compile/eval-in-project project
+    `(binding [*compile-files* true]
+       (load-string (pr-str '~forms)))))
+
+(defn compile-servlet [project]
+  (let [handler-sym (get-in project [:ring :handler])]
+    (compile-ns project
+      `(do (ns deploy.servlet
+             (:require
+               ~(symbol (namespace handler-sym))
+               ring.util.servlet)
+             (:gen-class
+                :name "deploy.servlet"
+                :extends javax.servlet.http.HttpServlet))
+           (ring.util.servlet/defservice ~handler-sym)))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
@@ -88,6 +105,7 @@
      (binding [compile/*silently* true]
        (when (zero? (compile/compile project))
          (let [war-path (war-file-path project war-name)]
+           (compile-servlet project)
            (write-war project war-path)
            (println "Created" war-path)
            war-path)))))
