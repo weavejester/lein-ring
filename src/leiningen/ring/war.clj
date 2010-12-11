@@ -1,6 +1,7 @@
 (ns leiningen.ring.war
   (:require [leiningen.compile :as compile]
             [clojure.java.io :as io])
+  (:use [clojure.contrib.prxml :only (prxml)])
   (:import [java.util.jar Manifest
                           JarEntry
                           JarOutputStream]
@@ -35,12 +36,21 @@
      "Built-By: " (System/getProperty "user.name") "\n"
      "Build-Jdk: " (System/getProperty "java.version") "\n\n"))))
 
+(defn make-web-xml [project]
+  (with-out-str
+    (prxml
+      [:web-app
+        [:servlet
+          [:servlet-name "TODO"]
+          [:servlet-class "TODO"]]
+        [:servlet-mapping
+          [:servlet-name "TODO"]
+          [:url-pattern "/*"]]])))
+
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
       (BufferedOutputStream.)
       (JarOutputStream. (make-manifest))))
-
-(defn make-web-xml [project] "<xml/>")
 
 (defn write-entry [war war-path entry]
   (.putNextEntry war (JarEntry. war-path))
