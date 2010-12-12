@@ -6,10 +6,12 @@
   ([project]
      (server project "3000"))
   ([project port]
-     (let [handler-sym (get-in project [:ring :handler])]
+     (let [handler-sym (get-in project [:ring :handler])
+           handler-ns  (symbol (namespace handler-sym))]
        (eval-in-project project
          `(do (require 'ring.adapter.jetty
-                       '~(symbol (namespace handler-sym)))
+                       'ring.middleware.stacktrace
+                       '~handler-ns)
               (ring.adapter.jetty/run-jetty
-                 ~handler-sym
-                 {:port ~(Integer/parseInt port)}))))))
+                (ring.middleware.stacktrace/wrap-stacktrace ~handler-sym)
+                {:port ~(Integer/parseInt port)}))))))
