@@ -1,7 +1,7 @@
 (ns leiningen.ring.run-server
   (:use ring.adapter.jetty
         ring.middleware.stacktrace
-        ring.middleware.reload-modified))
+        [clojure.java.browse :only (browse-url)]))
 
 (defn- try-ports [func ports]
   (try (func (first ports))
@@ -12,8 +12,18 @@
 
 (def suitable-ports (range 3000 3011))
 
-(defn run-server [handler port]
+(defn- jetty-server [handler port]
   (if port
-    (do (println "Starting web server on port" port)
-        (run-jetty handler {:port port}))
-    (try-ports #(run-server handler %) suitable-ports)))
+    (run-jetty (wrap-stacktrace handler)
+               {:port port, :join? false})
+    (try-ports #(jetty-server handler %)
+               suitable-ports)))
+
+(defn run-server [handler port]
+  (let [server    (jetty-server handler port)
+        connector (first (.getConnectors server))
+        host      (or (.getHost connector) "0.0.0.0")
+        port      (.getPort connector)]
+    (println "Started server on port" port)
+    (browse-url (str "http://" host ":" port))
+    (.join server)))
