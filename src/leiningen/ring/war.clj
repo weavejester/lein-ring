@@ -1,6 +1,7 @@
 (ns leiningen.ring.war
   (:require [leiningen.compile :as compile]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [clojure.string :as string])
   (:use [clojure.contrib.prxml :only (prxml)])
   (:import [java.util.jar Manifest
                           JarEntry
@@ -36,23 +37,50 @@
      "Built-By: " (System/getProperty "user.name") "\n"
      "Build-Jdk: " (System/getProperty "java.version") "\n\n"))))
 
+(defn default-servlet-class [project]
+  (let [handler-sym (get-in project [:ring :handler])
+        ns-parts    (-> (namespace handler-sym)
+                        (string/replace "-" "_")
+                        (string/split #"\.")
+                        (butlast)
+                        (vec)
+                        (conj "servlet"))]
+    (string/join "." ns-parts)))
+
+(defn servlet-class [project]
+  (or (get-in project [:ring :servlet-class])
+      (default-servlet-class project)))
+
+(defn servlet-ns [project]
+  (-> (servlet-class project)
+      (string/replace "_" "-")))
+
+(defn servlet-name [project]
+  (or (get-in project [:ring :servlet-name])
+      (str (get-in project [:ring :handler])
+           " servlet")))
+
+(defn context-path [project]
+  (-> (get-in project [:ring :context-path])
+      (or "/")
+      (str "*")))
+
 (defn make-web-xml [project]
   (with-out-str
     (prxml
       [:web-app
         [:servlet
-          [:servlet-name "war-servlet"]
-          [:servlet-class "deploy.servlet"]]
+          [:servlet-name  (servlet-name project)]
+          [:servlet-class (servlet-class project)]]
         [:servlet-mapping
-          [:servlet-name "war-servlet"]
-          [:url-pattern "/*"]]])))
-
+          [:servlet-name (servlet-name project)]
+          [:url-pattern (context-path project)]]])))
 
 (defn source-file [project namespace]
   (io/file (:compile-path project)
            (-> (str namespace)
-               (.replace "-" "_")
-               (.replace "." java.io.File/separator)
+               (string/replace "-" "_")
+               (string/replace "." java.io.File/separator)
                (str ".clj"))))
 
 (defn compile-form [project namespace form]
@@ -61,13 +89,14 @@
     (with-open [out (io/writer out-file)]
       (binding [*out* out] (prn form))))
   (compile/eval-in-project project
-    `(clojure.core/compile '~namespace)))
+    `(do (clojure.core/compile '~namespace) nil)))
 
 (defn compile-servlet [project]
   (let [handler-sym (get-in project [:ring :handler])
-        handler-ns  (symbol (namespace handler-sym))]
-    (compile-form project 'deploy.servlet
-      `(do (ns deploy.servlet
+        handler-ns  (symbol (namespace handler-sym))
+        servlet-ns  (symbol (servlet-ns project))]
+    (compile-form project servlet-ns
+      `(do (ns ~servlet-ns
              (:require ring.util.servlet ~handler-ns)
              (:gen-class :extends javax.servlet.http.HttpServlet))
            (ring.util.servlet/defservice ~handler-sym)))))
