@@ -39,6 +39,12 @@ By default, this command attempts to find a free port, starting at
 
     lein ring server 4000
 
+The server-headless command works like the server command, except that it doesn't open a web browser:
+
+    lein ring server-headless
+
+    lein ring server-headless 4000
+
 ### Compiling a war
 
 This next command will generate a war file from your handler:

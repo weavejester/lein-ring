@@ -19,11 +19,12 @@
     (try-ports #(jetty-server handler %)
                suitable-ports)))
 
-(defn run-server [handler port]
+(defn run-server [handler port launch-browser]
   (let [server    (jetty-server handler port)
         connector (first (.getConnectors server))
         host      (or (.getHost connector) "0.0.0.0")
         port      (.getPort connector)]
     (println "Started server on port" port)
-    (browse-url (str "http://" host ":" port))
+    (when launch-browser
+      (browse-url (str "http://" host ":" port)))
     (.join server)))
