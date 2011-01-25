@@ -14,7 +14,7 @@ Ring handler into a standard war file.
 To use Lein-Ring, add it as a development dependency to your
 `project.clj` file:
 
-    :dev-dependencies [[lein-ring "0.2.4"]]
+    :dev-dependencies [[lein-ring "0.2.5"]]
 
 And then add a new `:ring` key that contains a map of configuration
 options. At minimum there must be a `:handler` key that references
@@ -39,7 +39,8 @@ By default, this command attempts to find a free port, starting at
 
     lein ring server 4000
 
-The server-headless command works like the server command, except that it doesn't open a web browser:
+The server-headless command works like the server command, except that
+it doesn't open a web browser:
 
     lein ring server-headless
 
