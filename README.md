@@ -14,7 +14,7 @@ Ring handler into a standard war file.
 To use Lein-Ring, add it as a development dependency to your
 `project.clj` file:
 
-    :dev-dependencies [[lein-ring "0.2.5"]]
+    :dev-dependencies [[lein-ring "0.2.6"]]
 
 And then add a new `:ring` key that contains a map of configuration
 options. At minimum there must be a `:handler` key that references
