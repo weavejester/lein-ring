@@ -5,7 +5,7 @@
 
 (defn default-uberwar-name [project]
   (or (:uberjar-name project)
-      (str (:name project) \- (:version project) "-standalone.war")))
+      (str (:name project) "-" (:version project) "-standalone.war")))
 
 (defn jar-dependencies [project]
   (->> (:library-path project)
@@ -16,16 +16,16 @@
 (defn jar-entries [war project]
   (doseq [jar-file (jar-dependencies project)]
     (let [dir-path (:library-path project)
-          war-path (war/in-war-path "/WEB-INF/lib" dir-path jar-file)]
+          war-path (war/in-war-path "WEB-INF/lib/" dir-path jar-file)]
       (war/file-entry war project war-path jar-file))))
 
 (defn write-uberwar [project war-path]
   (with-open [war-stream (war/create-war project war-path)]
     (doto war-stream
-      (war/str-entry "/WEB-INF/web.xml" (war/make-web-xml project))
-      (war/dir-entry project "/WEB-INF/classes" (:compile-path project))
-      (war/dir-entry project "/WEB-INF/classes" (:source-path project))
-      (war/dir-entry project "/" (:resources-path project))
+      (war/str-entry "WEB-INF/web.xml" (war/make-web-xml project))
+      (war/dir-entry project "WEB-INF/classes/" (:compile-path project))
+      (war/dir-entry project "WEB-INF/classes/" (:source-path project))
+      (war/dir-entry project "" (:resources-path project))
       (jar-entries project))))
 
 (defn uberwar

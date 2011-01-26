@@ -114,7 +114,7 @@
   (write-entry war war-path (to-byte-stream content)))
 
 (defn in-war-path [war-path root file]
-  (str war-path "/"
+  (str war-path
        (-> (.toURI (io/file root)) 
            (.relativize (.toURI file))
            (.getPath))))
@@ -133,10 +133,10 @@
 (defn write-war [project war-path]
   (with-open [war-stream (create-war project war-path)]
     (doto war-stream
-      (str-entry "/WEB-INF/web.xml" (make-web-xml project))
-      (dir-entry project "/WEB-INF/classes" (:compile-path project))
-      (dir-entry project "/WEB-INF/classes" (:source-path project))
-      (dir-entry project "/" (:resources-path project)))))
+      (str-entry "WEB-INF/web.xml" (make-web-xml project))
+      (dir-entry project "WEB-INF/classes/" (:compile-path project))
+      (dir-entry project "WEB-INF/classes/" (:source-path project))
+      (dir-entry project "" (:resources-path project)))))
 
 (defn war
   "Create a $PROJECT-$VERSION.war file suitable for use in servlet containers."
