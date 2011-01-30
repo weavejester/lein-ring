@@ -67,9 +67,13 @@ the dependencies into the war:
 
 Currently the following options are supported:
 
-* `:servlet-class` - the servlet class
-* `:servlet-name`  - the name of the servlet (in web.xml)
-* `:context-path`  - the context path of the servlet (in web.xml)
+* `:servlet-class` - The servlet class name.
+* `:servlet-name` - 
+  The name of the servlet (in web.xml). Defaults to the handler name.
+* `:context-path` - The context path of the servlet (in web.xml).
+* `:servlet-path-info?` - 
+  If true, a :path-info key is added to the request map. Defaults to true.
+
 
 These keys should be placed under the `:ring` key in `project.clj`,
 and are optional values. If not supplied, default values will be used instead.
