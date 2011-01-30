@@ -74,6 +74,9 @@ Currently the following options are supported:
 * `:servlet-path-info?` - 
   If true, a :path-info key is added to the request map. Defaults to true.
 
-
 These keys should be placed under the `:ring` key in `project.clj`,
 and are optional values. If not supplied, default values will be used instead.
+
+A war file can also include additional resource files, such as images or
+stylesheets. These should be placed in the directory specified by the
+Leiningen `:resources-path` key, which defaults to "resources".
