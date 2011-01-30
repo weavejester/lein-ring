@@ -91,6 +91,13 @@
   (compile/eval-in-project project
     `(do (clojure.core/compile '~namespace) nil)))
 
+(defn generate-handler [project handler-sym]
+  (if (get-in project [:ring :servlet-path-info?] true)
+    `(fn [request#]
+       (let [path-info# (.getPathInfo (:servlet-request request#))]
+         (~handler-sym (assoc request# :path-info path-info#))))
+    handler-sym))
+
 (defn compile-servlet [project]
   (let [handler-sym (get-in project [:ring :handler])
         handler-ns  (symbol (namespace handler-sym))
@@ -99,7 +106,8 @@
       `(do (ns ~servlet-ns
              (:require ring.util.servlet ~handler-ns)
              (:gen-class :extends javax.servlet.http.HttpServlet))
-           (ring.util.servlet/defservice ~handler-sym)))))
+           (ring.util.servlet/defservice
+             ~(generate-handler project handler-sym))))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
