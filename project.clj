@@ -1,4 +1,4 @@
-(defproject lein-ring "0.3.0"
+(defproject lein-ring "0.3.1"
   :description "Leiningen Ring plugin"
   :dependencies [[org.clojure/clojure "1.2.0"]
                  [org.clojure/clojure-contrib "1.2.0"]
