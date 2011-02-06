@@ -94,8 +94,10 @@
 (defn generate-handler [project handler-sym]
   (if (get-in project [:ring :servlet-path-info?] true)
     `(fn [request#]
-       (let [path-info# (.getPathInfo (:servlet-request request#))]
-         (~handler-sym (assoc request# :path-info path-info#))))
+       (~handler-sym
+         (assoc request#
+           :path-info (.getPathInfo (:servlet-request request#))
+           :context   (.getContextPath (:servlet-request request#)))))
     handler-sym))
 
 (defn compile-servlet [project]
