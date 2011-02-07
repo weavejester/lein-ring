@@ -11,7 +11,9 @@
   (->> (:library-path project)
        (io/file)
        (.listFiles)
-       (filter #(.endsWith (str %) ".jar"))))
+       (filter #(.endsWith (str %) ".jar"))
+       ;; Servlet container will have it's own servlet-api implementation
+       (remove #(.startsWith (.getName %) "servlet-api-"))))
 
 (defn jar-entries [war project]
   (doseq [jar-file (jar-dependencies project)]
