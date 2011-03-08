@@ -72,7 +72,10 @@ Currently the following options are supported:
   The name of the servlet (in web.xml). Defaults to the handler name.
 * `:context-path` - The context path of the servlet (in web.xml).
 * `:servlet-path-info?` - 
-  If true, a :path-info key is added to the request map. Defaults to true.
+  If true, a `:path-info` key is added to the request map. Defaults to true.
+* `:resources-war-path` -
+  The path inside the war to put resources in, e.g. "WEB-INF/classes/".
+  Defaults to "".
 
 These keys should be placed under the `:ring` key in `project.clj`,
 and are optional values. If not supplied, default values will be used instead.
