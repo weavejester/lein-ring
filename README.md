@@ -70,7 +70,7 @@ Currently the following options are supported:
 * `:servlet-class` - The servlet class name.
 * `:servlet-name` - 
   The name of the servlet (in web.xml). Defaults to the handler name.
-* `:context-path` - The context path of the servlet (in web.xml).
+* `:url-pattern` - The url pattern of the servlet mapping (in web.xml).
 * `:servlet-path-info?` - 
   If true, a `:path-info` key is added to the request map. Defaults to true.
 * `:resources-war-path` -

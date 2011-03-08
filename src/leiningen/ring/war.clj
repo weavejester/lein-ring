@@ -60,10 +60,9 @@
       (str (get-in project [:ring :handler])
            " servlet")))
 
-(defn context-path [project]
-  (-> (get-in project [:ring :context-path])
-      (or "/")
-      (str "*")))
+(defn url-pattern [project]
+  (or (get-in project [:ring :url-pattern])
+      "/*"))
 
 (defn make-web-xml [project]
   (with-out-str
@@ -74,7 +73,7 @@
           [:servlet-class (servlet-class project)]]
         [:servlet-mapping
           [:servlet-name (servlet-name project)]
-          [:url-pattern (context-path project)]]])))
+          [:url-pattern (url-pattern project)]]])))
 
 (defn source-file [project namespace]
   (io/file (:compile-path project)
