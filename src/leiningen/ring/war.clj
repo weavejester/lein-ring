@@ -6,8 +6,8 @@
   (:import [java.util.jar Manifest
                           JarEntry
                           JarOutputStream]
-           [java.io BufferedOutputStream 
-                    FileOutputStream 
+           [java.io BufferedOutputStream
+                    FileOutputStream
                     ByteArrayInputStream]))
 
 (defn default-war-name [project]
@@ -31,7 +31,7 @@
 (defn make-manifest []
   (Manifest.
    (to-byte-stream
-    (str 
+    (str
      "Manifest-Version: 1.0\n"
      "Created-By: Leiningen Ring Plugin\n"
      "Built-By: " (System/getProperty "user.name") "\n"
@@ -64,16 +64,22 @@
   (or (get-in project [:ring :url-pattern])
       "/*"))
 
+(defn servlets [project]
+  (or (get-in project [:ring :servlets])
+      []))
+
+(defn generate-web-xml-for-servlet
+  [servlets [name class url-pattern]]
+  (conj servlets
+        [:servlet [:servlet-name name] [:servlet-class class]]
+        [:servlet-mapping [:servlet-name name] [:url-pattern url-pattern]]))
+
 (defn make-web-xml [project]
-  (with-out-str
-    (prxml
-      [:web-app
-        [:servlet
-          [:servlet-name  (servlet-name project)]
-          [:servlet-class (servlet-class project)]]
-        [:servlet-mapping
-          [:servlet-name (servlet-name project)]
-          [:url-pattern (url-pattern project)]]])))
+  (let [ring-servlet [(servlet-name project) (servlet-class project) (url-pattern project)]
+        all-servlets (conj (servlets project) ring-servlet)]
+    (with-out-str
+      (prxml
+       (reduce generate-web-xml-for-servlet [:web-xml] all-servlets)))))
 
 (defn source-file [project namespace]
   (io/file (:compile-path project)
