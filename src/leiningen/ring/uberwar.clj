@@ -27,8 +27,8 @@
       (war/str-entry "WEB-INF/web.xml" (war/make-web-xml project))
       (war/dir-entry project "WEB-INF/classes/" (:compile-path project))
       (war/dir-entry project "WEB-INF/classes/" (:source-path project))
-      (war/dir-entry project (war/resources-war-path project)
-                             (:resources-path project))
+      (war/dir-entry project "WEB-INF/classes/" (:resources-path project))
+      (war/dir-entry project "" (war/war-resources-path project))
       (jar-entries project))))
 
 (defn uberwar

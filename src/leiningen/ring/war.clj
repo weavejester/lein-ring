@@ -139,8 +139,8 @@
     (let [war-path (in-war-path war-root dir-path file)]
       (file-entry war project war-path file))))
 
-(defn resources-war-path [project]
-  (or (-> project :ring :resources-war-path) ""))
+(defn war-resources-path [project]
+  (:war-resources-path project "war-resources"))
 
 (defn write-war [project war-path]
   (with-open [war-stream (create-war project war-path)]
@@ -148,8 +148,8 @@
       (str-entry "WEB-INF/web.xml" (make-web-xml project))
       (dir-entry project "WEB-INF/classes/" (:compile-path project))
       (dir-entry project "WEB-INF/classes/" (:source-path project))
-      (dir-entry project (resources-war-path project)
-                         (:resources-path project)))))
+      (dir-entry project "WEB-INF/classes/" (:resources-path project))
+      (dir-entry project "" (war-resources-path project)))))
 
 (defn war
   "Create a $PROJECT-$VERSION.war file suitable for use in servlet containers."
