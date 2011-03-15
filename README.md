@@ -63,7 +63,7 @@ generated as an additional option:
 Also provided is a `lein ring uberwar` command, which packages up all
 the dependencies into the war:
 
-    lein ring uberwarx
+    lein ring uberwar
 
 Currently the following options are supported:
 
