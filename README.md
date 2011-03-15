@@ -63,7 +63,7 @@ generated as an additional option:
 Also provided is a `lein ring uberwar` command, which packages up all
 the dependencies into the war:
 
-    lein ring uberwar
+    lein ring uberwarx
 
 Currently the following options are supported:
 
@@ -73,13 +73,21 @@ Currently the following options are supported:
 * `:url-pattern` - The url pattern of the servlet mapping (in web.xml).
 * `:servlet-path-info?` - 
   If true, a `:path-info` key is added to the request map. Defaults to true.
-* `:resources-war-path` -
-  The path inside the war to put resources in, e.g. "WEB-INF/classes/".
-  Defaults to "".
 
 These keys should be placed under the `:ring` key in `project.clj`,
 and are optional values. If not supplied, default values will be used instead.
 
+### Resources
+
 A war file can also include additional resource files, such as images or
 stylesheets. These should be placed in the directory specified by the
-Leiningen `:resources-path` key, which defaults to "resources".
+Leiningen `:resources-path` key, which defaults to "resources". These
+resources will be placed on the classpath.
+
+However, there is another sort of resource, one accessed through the
+`ServletContext` object. These resources are usually not on the classpath,
+and are instead placed in the root of the war file. If you happen to need this
+functionality, you can place your files in the directory specified by the
+`:war-resources-path` key, which defaules to "war-resources". It's recommended
+that you only use WAR resources for compatibility with legacy Java interfaces;
+under most circumstances, you should use the normal `:resources-path` instead.
