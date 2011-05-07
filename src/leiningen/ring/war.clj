@@ -60,6 +60,24 @@
       (str (get-in project [:ring :handler])
            " servlet")))
 
+(defn default-listener-class [project]
+  (let [listener-sym (get-in project [:ring :listener])
+        ns-parts     (-> (namespace listener-sym)
+                         (string/replace "-" "_")
+                         (string/split #"\.")
+                         (butlast)
+                         (vec)
+                         (conj "listener"))]
+    (string/join "." ns-parts)))
+
+(defn listener-class [project]
+  (or (get-in project [:ring :listener-class])
+      (default-listener-class project)))
+
+(defn listener-ns [project]
+  (-> (listener-class project)
+      (string/replace "_" "-")))
+
 (defn url-pattern [project]
   (or (get-in project [:ring :url-pattern])
       "/*"))
@@ -68,6 +86,9 @@
   (with-out-str
     (prxml
       [:web-app
+        (when-let [listener (get-in project [:ring :listener])]
+          [:listener
+            [:listener-class (listener-class project)]])
         [:servlet
           [:servlet-name  (servlet-name project)]
           [:servlet-class (servlet-class project)]]
@@ -109,6 +130,18 @@
              (:gen-class :extends javax.servlet.http.HttpServlet))
            (ring.util.servlet/defservice
              ~(generate-handler project handler-sym))))))
+
+(defn compile-listener [project]
+  (let [listener-sym (get-in project [:ring :listener])
+        listen-ns    (symbol (namespace listener-sym))
+        project-ns   (symbol (listener-ns project))]
+    (compile-form project project-ns
+      `(do (ns ~project-ns
+             (:require ~listen-ns)
+             (:gen-class :implements [javax.servlet.ServletContextListener]))
+           (defn ~'-contextInitialized [this# event#]
+             (~listener-sym event#))
+           (defn ~'-contextDestroyed [this# event#])))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
@@ -160,6 +193,8 @@
        (when (zero? (compile/compile project))
          (let [war-path (war-file-path project war-name)]
            (compile-servlet project)
+           (if (get-in project [:ring :listener])
+             (compile-listener project))
            (write-war project war-path)
            (println "Created" war-path)
            war-path)))))
