@@ -141,7 +141,10 @@
              (:gen-class :implements [javax.servlet.ServletContextListener]))
            (defn ~'-contextInitialized [this# event#]
              (~listener-sym event#))
-           (defn ~'-contextDestroyed [this# event#])))))
+           ~(let [event (gensym)]
+              `(defn ~'-contextDestroyed [this# ~event]
+                 ~(if-let [destroy-sym (get-in project [:ring :destroy])]
+                    `(~destroy-sym ~event))))))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
