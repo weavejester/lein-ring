@@ -68,12 +68,21 @@ the dependencies into the war:
 Currently the following options are supported:
 
 * `:servlet-class` - The servlet class name.
-* `:servlet-name` - 
+* `:servlet-name` -
   The name of the servlet (in web.xml). Defaults to the handler name.
-* `:url-pattern` - 
+* `:url-pattern` -
   The url pattern of the servlet mapping (in web.xml). Defaults to "/*".
-* `:servlet-path-info?` - 
+* `:servlet-path-info?` -
   If true, a `:path-info` key is added to the request map. Defaults to true.
+* `:listener` -
+  A function that gets called when the servlet web context is
+  initialized. This happens before the servlet receives requests and
+  is useful to perform any one-time initialization tasks. Under the
+  hood, a ServletContextListener is created, and this function gets
+  called in the contextInitialized method. The function gets passed an
+  instance of a ServletContextEvent.
+* `:listener-class` - The listener class name
+
 
 These keys should be placed under the `:ring` key in `project.clj`,
 and are optional values. If not supplied, default values will be used instead.
