@@ -61,7 +61,7 @@
            " servlet")))
 
 (defn default-listener-class [project]
-  (let [listener-sym (get-in project [:ring :listener])
+  (let [listener-sym (get-in project [:ring :init])
         ns-parts     (-> (namespace listener-sym)
                          (string/replace "-" "_")
                          (string/split #"\.")
@@ -71,7 +71,7 @@
     (string/join "." ns-parts)))
 
 (defn listener-class [project]
-  (or (get-in project [:ring :listener-class])
+  (or (get-in project [:ring :init-class])
       (default-listener-class project)))
 
 (defn listener-ns [project]
@@ -86,7 +86,7 @@
   (with-out-str
     (prxml
       [:web-app
-        (when-let [listener (get-in project [:ring :listener])]
+        (when-let [listener (get-in project [:ring :init])]
           [:listener
             [:listener-class (listener-class project)]])
         [:servlet
@@ -132,7 +132,7 @@
              ~(generate-handler project handler-sym))))))
 
 (defn compile-listener [project]
-  (let [listener-sym (get-in project [:ring :listener])
+  (let [listener-sym (get-in project [:ring :init])
         listen-ns    (symbol (namespace listener-sym))
         project-ns   (symbol (listener-ns project))]
     (compile-form project project-ns
@@ -193,7 +193,7 @@
        (when (zero? (compile/compile project))
          (let [war-path (war-file-path project war-name)]
            (compile-servlet project)
-           (if (get-in project [:ring :listener])
+           (if (get-in project [:ring :init])
              (compile-listener project))
            (write-war project war-path)
            (println "Created" war-path)

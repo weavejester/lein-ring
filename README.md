@@ -74,14 +74,14 @@ Currently the following options are supported:
   The url pattern of the servlet mapping (in web.xml). Defaults to "/*".
 * `:servlet-path-info?` -
   If true, a `:path-info` key is added to the request map. Defaults to true.
-* `:listener` -
+* `:init` -
   A function that gets called when the servlet web context is
   initialized. This happens before the servlet receives requests and
   is useful to perform any one-time initialization tasks. Under the
   hood, a ServletContextListener is created, and this function gets
   called in the contextInitialized method. The function gets passed an
   instance of a ServletContextEvent.
-* `:listener-class` - The listener class name
+* `:init-class` - The init class name
 
 
 These keys should be placed under the `:ring` key in `project.clj`,

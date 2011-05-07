@@ -40,7 +40,7 @@
        (when (zero? (compile/compile project))
          (let [war-path (war/war-file-path project war-name)]
            (war/compile-servlet project)
-           (if (get-in project [:ring :listener])
+           (if (get-in project [:ring :init])
              (war/compile-listener project))
            (write-uberwar project war-path)
            (println "Created" war-path)
