@@ -81,7 +81,13 @@ Currently the following options are supported:
   hood, a ServletContextListener is created, and this function gets
   called in the contextInitialized method. The function gets passed an
   instance of a ServletContextEvent.
-* `:init-class` - The init class name
+* `:destroy` -
+  A function that gets called when the context is destroyed. Useful to
+  perform cleanup tasks. Takes a ServletContextEvent like the init
+  function.
+* `:listener-class` -
+  Class used for init/destroy functions. Called listener because
+  underneath it uses a ServletContextListener.
 
 
 These keys should be placed under the `:ring` key in `project.clj`,
