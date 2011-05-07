@@ -4,9 +4,11 @@
 (defn server-task
   "Shared logic for server and server-headless tasks."
   [project port launch-browser]
-    (let [handler-sym (get-in project [:ring :handler])
-           handler-ns  (symbol (namespace handler-sym))
-           reload-dirs [(:source-path project)]]
+  (let [handler-sym (get-in project [:ring :handler])
+        handler-ns  (symbol (namespace handler-sym))
+        reload-dirs [(:source-path project)]
+        init-sym    (get-in project [:ring :init])
+        destroy-sym (get-in project [:ring :destroy])]
        (eval-in-project project
          `(do (require 'leiningen.ring.run-server
                        'ring.middleware.stacktrace
@@ -18,7 +20,9 @@
                     (ring.middleware.reload-modified/wrap-reload-modified
                       ~reload-dirs))
                 ~(if port (Integer/parseInt port))
-		~launch-browser)))))
+                ~launch-browser
+                ~init-sym
+                ~destroy-sym)))))
 
 (defn server
   "Start a Ring server and open a browser."

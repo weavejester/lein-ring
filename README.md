@@ -68,12 +68,23 @@ the dependencies into the war:
 Currently the following options are supported:
 
 * `:servlet-class` - The servlet class name.
-* `:servlet-name` - 
+* `:servlet-name` -
   The name of the servlet (in web.xml). Defaults to the handler name.
-* `:url-pattern` - 
+* `:url-pattern` -
   The url pattern of the servlet mapping (in web.xml). Defaults to "/*".
-* `:servlet-path-info?` - 
+* `:servlet-path-info?` -
   If true, a `:path-info` key is added to the request map. Defaults to true.
+* `:init` -
+  A hook to perform any one time initialization tasks. When generating
+  a servlet, a servlet context listener is created, and the hook is
+  called during its initialization. When running lein ring server,
+  it's called before the server starts. This function should take no
+  arguments.
+* `:destroy` -
+  A hook to perform shutdown tasks. It should also take no arguments.
+* `:listener-class` -
+  Class used for servlet init/destroy functions. Called listener
+  because underneath it uses a ServletContextListener.
 
 These keys should be placed under the `:ring` key in `project.clj`,
 and are optional values. If not supplied, default values will be used instead.
