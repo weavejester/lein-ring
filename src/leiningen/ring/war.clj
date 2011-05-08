@@ -2,7 +2,8 @@
   (:require [leiningen.compile :as compile]
             [clojure.java.io :as io]
             [clojure.string :as string])
-  (:use [clojure.contrib.prxml :only (prxml)])
+  (:use [clojure.contrib.prxml :only (prxml)]
+        [clojure.contrib.string :only (as-str)])
   (:import [java.util.jar Manifest
                           JarEntry
                           JarOutputStream]
@@ -91,16 +92,26 @@
 (defn make-web-xml [project]
   (with-out-str
     (prxml
-      [:web-app
-       (if (has-listener? project)
-         [:listener
-          [:listener-class (listener-class project)]])
-        [:servlet
-          [:servlet-name  (servlet-name project)]
-          [:servlet-class (servlet-class project)]]
-        [:servlet-mapping
-          [:servlet-name (servlet-name project)]
-          [:url-pattern (url-pattern project)]]])))
+     [:web-app
+      (if-let [context-params (get-in project [:ring :context-params])]
+        (for [context-init-param context-params]
+          [:context-param
+           [:param-name  (as-str (:param-name  context-init-param))]
+           [:param-value (as-str (:param-value context-init-param))]]))
+      (if (has-listener? project)
+        [:listener
+         [:listener-class (listener-class project)]])
+      [:servlet
+       [:servlet-name  (servlet-name project)]
+       [:servlet-class (servlet-class project)]
+       (if-let [servlet-params (get-in project [:ring :servlet-params])]
+         (for [servlet-init-param servlet-params]
+           [:init-param
+            [:param-name  (as-str (:param-name  servlet-init-param))]
+            [:param-value (as-str (:param-value servlet-init-param))]]))]
+      [:servlet-mapping
+       [:servlet-name (servlet-name project)]
+       [:url-pattern (url-pattern project)]]])))
 
 (defn source-file [project namespace]
   (io/file (:compile-path project)

@@ -88,7 +88,14 @@ Currently the following options are supported:
 * `:listener-class` -
   Class used for init/destroy functions. Called listener because
   underneath it uses a ServletContextListener.
-
+* `:context-params` -
+  The context parameters to write to the web.xml file. This should be
+  a sequence of maps. Each map should contain :param-name and
+  :param-value keys.
+* `:servlet-params` -
+  The servlet init parameters to write to the web.xml file. This
+  should be a sequence of maps. Each map should contain :param-name
+  and :param-value keys.
 
 These keys should be placed under the `:ring` key in `project.clj`,
 and are optional values. If not supplied, default values will be used instead.
