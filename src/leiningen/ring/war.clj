@@ -63,12 +63,12 @@
 
 (defn has-listener? [project]
   (let [ring-options (:ring project)]
-    (or (contains? ring-options :init)
-        (contains? ring-options :destroy))))
+    (or (contains? ring-options :context-init)
+        (contains? ring-options :context-destroy))))
 
 (defn default-listener-class [project]
-  (let [listener-sym (or (get-in project [:ring :init])
-                         (get-in project [:ring :destroy]))
+  (let [listener-sym (or (get-in project [:ring :context-init])
+                         (get-in project [:ring :context-destroy]))
         ns-parts     (-> (namespace listener-sym)
                          (string/replace "-" "_")
                          (string/split #"\.")
@@ -139,18 +139,35 @@
 
 (defn compile-servlet [project]
   (let [handler-sym (get-in project [:ring :handler])
+        init-sym    (get-in project [:ring :servlet-init])
+        destroy-sym (get-in project [:ring :servlet-destroy])
         handler-ns  (symbol (namespace handler-sym))
-        servlet-ns  (symbol (servlet-ns project))]
+        servlet-ns  (symbol (servlet-ns project))
+        init-ns     (and init-sym    (symbol (namespace init-sym)))
+        destroy-ns  (and destroy-sym (symbol (namespace destroy-sym)))]
     (compile-form project servlet-ns
       `(do (ns ~servlet-ns
-             (:require ring.util.servlet ~handler-ns)
-             (:gen-class :extends javax.servlet.http.HttpServlet))
+             (:require ring.util.servlet
+                       ~@(set (remove nil? [handler-ns init-ns destroy-ns])))
+             (:gen-class :extends javax.servlet.http.HttpServlet
+                         :exposes-methods {~'init ~'superInit}))
            (ring.util.servlet/defservice
-             ~(generate-handler project handler-sym))))))
+             ~(generate-handler project handler-sym))
+           ~@(remove
+              nil?
+              [(if init-sym
+                 `(defn ~'-init
+                    ([servlet# servlet-config#]
+                       (. servlet# ~'superInit servlet-config#))
+                    ([servlet#]
+                       (~init-sym servlet#))))
+               (if destroy-sym
+                 `(defn ~'-destroy [servlet#]
+                    (~destroy-sym servlet#)))])))))
 
 (defn compile-listener [project]
-  (let [init-sym    (get-in project [:ring :init])
-        destroy-sym (get-in project [:ring :destroy])
+  (let [init-sym    (get-in project [:ring :context-init])
+        destroy-sym (get-in project [:ring :context-destroy])
         init-ns     (and init-sym    (symbol (namespace init-sym)))
         destroy-ns  (and destroy-sym (symbol (namespace destroy-sym)))
         project-ns  (symbol (listener-ns project))]

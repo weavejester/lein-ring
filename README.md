@@ -74,20 +74,26 @@ Currently the following options are supported:
   The url pattern of the servlet mapping (in web.xml). Defaults to "/*".
 * `:servlet-path-info?` -
   If true, a `:path-info` key is added to the request map. Defaults to true.
-* `:init` -
+* `:context-init` -
   A function that gets called when the servlet web context is
   initialized. This happens before the servlet receives requests and
   is useful to perform any one-time initialization tasks. Under the
   hood, a ServletContextListener is created, and this function gets
   called in the contextInitialized method. The function gets passed an
   instance of a ServletContextEvent.
-* `:destroy` -
+* `:context-destroy` -
   A function that gets called when the context is destroyed. Useful to
   perform cleanup tasks. Takes a ServletContextEvent like the init
   function.
 * `:listener-class` -
   Class used for init/destroy functions. Called listener because
   underneath it uses a ServletContextListener.
+* `:servlet-init` -
+  A function that gets called on servlet init. Should take one
+  argument, a reference to the servlet itself.
+* `:servlet-destroy` -
+  A function that gets called on servlet destroy. Should take one
+  argument, a reference to the servlet itself.
 * `:context-params` -
   The context parameters to write to the web.xml file. This should be
   a sequence of maps. Each map should contain :param-name and
