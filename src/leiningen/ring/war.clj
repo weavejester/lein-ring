@@ -2,7 +2,8 @@
   (:require [leiningen.compile :as compile]
             [clojure.java.io :as io]
             [clojure.string :as string])
-  (:use [clojure.contrib.prxml :only (prxml)])
+  (:use [clojure.contrib.prxml :only (prxml)]
+        [clojure.contrib.string :only (as-str)])
   (:import [java.util.jar Manifest
                           JarEntry
                           JarOutputStream]
@@ -60,6 +61,30 @@
       (str (get-in project [:ring :handler])
            " servlet")))
 
+(defn has-listener? [project]
+  (let [ring-options (:ring project)]
+    (or (contains? ring-options :context-init)
+        (contains? ring-options :context-destroy))))
+
+(defn default-listener-class [project]
+  (let [listener-sym (or (get-in project [:ring :context-init])
+                         (get-in project [:ring :context-destroy]))
+        ns-parts     (-> (namespace listener-sym)
+                         (string/replace "-" "_")
+                         (string/split #"\.")
+                         (butlast)
+                         (vec)
+                         (conj "listener"))]
+    (string/join "." ns-parts)))
+
+(defn listener-class [project]
+  (or (get-in project [:ring :listener-class])
+      (default-listener-class project)))
+
+(defn listener-ns [project]
+  (-> (listener-class project)
+      (string/replace "_" "-")))
+
 (defn url-pattern [project]
   (or (get-in project [:ring :url-pattern])
       "/*"))
@@ -67,13 +92,26 @@
 (defn make-web-xml [project]
   (with-out-str
     (prxml
-      [:web-app
-        [:servlet
-          [:servlet-name  (servlet-name project)]
-          [:servlet-class (servlet-class project)]]
-        [:servlet-mapping
-          [:servlet-name (servlet-name project)]
-          [:url-pattern (url-pattern project)]]])))
+     [:web-app
+      (if-let [context-params (get-in project [:ring :context-params])]
+        (for [context-init-param context-params]
+          [:context-param
+           [:param-name  (as-str (:param-name  context-init-param))]
+           [:param-value (as-str (:param-value context-init-param))]]))
+      (if (has-listener? project)
+        [:listener
+         [:listener-class (listener-class project)]])
+      [:servlet
+       [:servlet-name  (servlet-name project)]
+       [:servlet-class (servlet-class project)]
+       (if-let [servlet-params (get-in project [:ring :servlet-params])]
+         (for [servlet-init-param servlet-params]
+           [:init-param
+            [:param-name  (as-str (:param-name  servlet-init-param))]
+            [:param-value (as-str (:param-value servlet-init-param))]]))]
+      [:servlet-mapping
+       [:servlet-name (servlet-name project)]
+       [:url-pattern (url-pattern project)]]])))
 
 (defn source-file [project namespace]
   (io/file (:compile-path project)
@@ -101,14 +139,50 @@
 
 (defn compile-servlet [project]
   (let [handler-sym (get-in project [:ring :handler])
+        init-sym    (get-in project [:ring :servlet-init])
+        destroy-sym (get-in project [:ring :servlet-destroy])
         handler-ns  (symbol (namespace handler-sym))
-        servlet-ns  (symbol (servlet-ns project))]
+        servlet-ns  (symbol (servlet-ns project))
+        init-ns     (and init-sym    (symbol (namespace init-sym)))
+        destroy-ns  (and destroy-sym (symbol (namespace destroy-sym)))]
     (compile-form project servlet-ns
       `(do (ns ~servlet-ns
-             (:require ring.util.servlet ~handler-ns)
-             (:gen-class :extends javax.servlet.http.HttpServlet))
+             (:require ring.util.servlet
+                       ~@(set (remove nil? [handler-ns init-ns destroy-ns])))
+             (:gen-class :extends javax.servlet.http.HttpServlet
+                         :exposes-methods {~'init ~'superInit}))
            (ring.util.servlet/defservice
-             ~(generate-handler project handler-sym))))))
+             ~(generate-handler project handler-sym))
+           ~@(remove
+              nil?
+              [(if init-sym
+                 `(defn ~'-init
+                    ([servlet# servlet-config#]
+                       (. servlet# ~'superInit servlet-config#))
+                    ([servlet#]
+                       (~init-sym servlet#))))
+               (if destroy-sym
+                 `(defn ~'-destroy [servlet#]
+                    (~destroy-sym servlet#)))])))))
+
+(defn compile-listener [project]
+  (let [init-sym    (get-in project [:ring :context-init])
+        destroy-sym (get-in project [:ring :context-destroy])
+        init-ns     (and init-sym    (symbol (namespace init-sym)))
+        destroy-ns  (and destroy-sym (symbol (namespace destroy-sym)))
+        project-ns  (symbol (listener-ns project))]
+    (compile-form project project-ns
+      `(do (ns ~project-ns
+             (:require ~@(set (remove nil? [init-ns destroy-ns])))
+             (:gen-class :implements [javax.servlet.ServletContextListener]))
+           ~(let [servlet-context-event (gensym)]
+              `(do
+                 (defn ~'-contextInitialized [this# ~servlet-context-event]
+                   ~(if init-sym
+                      `(~init-sym ~servlet-context-event)))
+                 (defn ~'-contextDestroyed [this# ~servlet-context-event]
+                   ~(if destroy-sym
+                      `(~destroy-sym ~servlet-context-event)))))))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
@@ -160,6 +234,8 @@
        (when (zero? (compile/compile project))
          (let [war-path (war-file-path project war-name)]
            (compile-servlet project)
+           (if (has-listener? project)
+             (compile-listener project))
            (write-war project war-path)
            (println "Created" war-path)
            war-path)))))
