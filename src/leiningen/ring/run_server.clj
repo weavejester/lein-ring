@@ -19,8 +19,11 @@
     (try-ports #(jetty-server handler %)
                suitable-ports)))
 
-(defn run-server [handler port launch-browser? init-handler destroy-handler]
-  (when init-handler (init-handler))
+(defn run-server [handler port launch-browser? init-fn destroy-fn]
+  (when destroy-fn
+    (. (Runtime/getRuntime)
+       (addShutdownHook (Thread. destroy-fn))))
+  (when init-fn (init-fn))
   (let [server    (jetty-server handler port)
         connector (first (.getConnectors server))
         host      (or (.getHost connector) "0.0.0.0")
@@ -29,7 +32,4 @@
     (println "Started server on port" port)
     (when launch-browser?
       (browse-url (str "http://" url-host ":" port)))
-    (try
-      (.join server)
-      (finally
-       (when destroy-handler (destroy-handler))))))
+    (.join server)))
