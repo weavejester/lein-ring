@@ -17,13 +17,7 @@
         [init-sym init-ns]       (sym-and-ns project :init)
         [destroy-sym destroy-ns] (sym-and-ns project :destroy)]
        (eval-in-project project
-         `(do (require 'leiningen.ring.run-server
-                       'ring.middleware.stacktrace
-                       'ring.middleware.reload-modified
-                       '~handler-ns)
-              ~@(require-sym init-ns)
-              ~@(require-sym destroy-ns)
-              (leiningen.ring.run-server/run-server
+         `(do (leiningen.ring.run-server/run-server
                 (-> (var ~handler-sym)
                     (ring.middleware.stacktrace/wrap-stacktrace)
                     (ring.middleware.reload-modified/wrap-reload-modified
@@ -31,7 +25,13 @@
                 ~(if port (Integer/parseInt port))
                 ~launch-browser
                 ~init-sym
-                ~destroy-sym)))))
+                ~destroy-sym))
+         nil nil `(do (require 'leiningen.ring.run-server
+                               'ring.middleware.stacktrace
+                               'ring.middleware.reload-modified
+                               '~handler-ns)
+                      ~@(require-sym init-ns)
+                      ~@(require-sym destroy-ns)))))
 
 (defn server
   "Start a Ring server and open a browser."
