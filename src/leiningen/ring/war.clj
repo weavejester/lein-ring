@@ -28,14 +28,19 @@
 (defn- to-byte-stream [^String s]
   (ByteArrayInputStream. (.getBytes s)))
 
-(defn make-manifest []
+(def default-ring-manifest
+  {"Created-By"       "Leiningen Ring Plugin"
+   "Built-By"         (System/getProperty "user.name")
+   "Build-Jdk"        (System/getProperty "java.version")})
+
+(defn make-manifest [user-manifest]
   (Manifest.
    (to-byte-stream
-    (str 
-     "Manifest-Version: 1.0\n"
-     "Created-By: Leiningen Ring Plugin\n"
-     "Built-By: " (System/getProperty "user.name") "\n"
-     "Build-Jdk: " (System/getProperty "java.version") "\n\n"))))
+    (reduce
+     (fn [accumulated-manifest [k v]]
+       (str accumulated-manifest "\n" k ": " v))
+     "Manifest-Version: 1.0"
+     (merge default-ring-manifest user-manifest)))))
 
 (defn default-servlet-class [project]
   (let [handler-sym (get-in project [:ring :handler])
@@ -159,7 +164,7 @@
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
       (BufferedOutputStream.)
-      (JarOutputStream. (make-manifest))))
+      (JarOutputStream. (make-manifest (:manifest project)))))
 
 (defn write-entry [war war-path entry]
   (.putNextEntry war (JarEntry. war-path))
