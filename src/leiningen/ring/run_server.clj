@@ -21,17 +21,23 @@
               [port] (jetty-server handler (assoc jetty-params :port port)))]
       (try-ports try-port suitable-ports))))
 
-(defn run-server [handler jetty-params launch-browser? init-fn destroy-fn]
+(defn run-server [handler jetty-params launch-browser?
+                  init-fn destroy-fn report-ports]
   (when destroy-fn
     (. (Runtime/getRuntime)
        (addShutdownHook (Thread. destroy-fn))))
   (when init-fn (init-fn))
-  (let [server    (jetty-server handler jetty-params)
-        connector (first (.getConnectors server))
-        host      (or (.getHost connector) "0.0.0.0")
-        port      (.getPort connector)
-        url-host  (if (= host "0.0.0.0") "localhost" host)]
+  (let [server     (jetty-server handler jetty-params)
+        [http ssl] (.getConnectors server)
+        host       (or (.getHost http) "0.0.0.0")
+        port       (.getPort http)
+        ssl-port    (if ssl (.getPort ssl))
+        url-host   (if (= host "0.0.0.0") "localhost" host)]
     (println "Started server on port" port)
+    (when ssl-port
+      (println "Started SSL server on port" ssl-port))
+    (when report-ports
+      (report-ports port ssl-port))
     (when launch-browser?
       (browse-url (str "http://" url-host ":" port)))
     (.join server)))

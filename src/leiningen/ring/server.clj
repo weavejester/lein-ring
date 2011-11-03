@@ -17,7 +17,8 @@
         [handler-sym handler-ns] (sym-and-ns project :handler)
         [init-sym init-ns]       (sym-and-ns project :init)
         [destroy-sym destroy-ns] (sym-and-ns project :destroy)
-        jetty-params1 (dissoc ring :handler :init :destroy :join)
+        [report-ports-sym report-ports-ns] (sym-and-ns project :report-ports)
+        jetty-params1 (dissoc ring :handler :init :destroy :report-ports :join)
         jetty-params (if port
                        (assoc jetty-params1 :port (Integer/parseInt port))
                        jetty-params1)]
@@ -27,17 +28,19 @@
                 (-> (var ~handler-sym)
                     (ring.middleware.stacktrace/wrap-stacktrace)
                     (ring.middleware.reload-modified/wrap-reload-modified
-                      ~reload-dirs))
+                     ~reload-dirs))
                 ~jetty-params
                 ~launch-browser
                 ~init-sym
-                ~destroy-sym))
+                ~destroy-sym
+                ~report-ports-sym))
          nil nil `(do (require 'leiningen.ring.run-server
                                'ring.middleware.stacktrace
                                'ring.middleware.reload-modified
                                '~handler-ns)
                       ~@(require-sym init-ns)
-                      ~@(require-sym destroy-ns)))))
+                      ~@(require-sym destroy-ns)
+                      ~@(require-sym report-ports-ns)))))
 
 (defn server
   "Start a Ring server and open a browser."
