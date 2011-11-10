@@ -12,26 +12,35 @@
 (defn server-task
   "Shared logic for server and server-headless tasks."
   [project port launch-browser]
-  (let [reload-dirs [(:source-path project)]
+  (let [
+        reload-dirs [(:source-path project)]
         [handler-sym handler-ns] (sym-and-ns project :handler)
         [init-sym init-ns]       (sym-and-ns project :init)
-        [destroy-sym destroy-ns] (sym-and-ns project :destroy)]
+        [destroy-sym destroy-ns] (sym-and-ns project :destroy)
+        [report-ports-sym report-ports-ns] (sym-and-ns project :report-ports)
+        adapter (-> project :ring :adapter)
+        jetty-params (if port
+                       (assoc adapter :port (Integer/parseInt port))
+                       adapter)]
        (eval-in-project project
-         `(do (leiningen.ring.run-server/run-server
+         `(do
+            (leiningen.ring.run-server/run-server
                 (-> (var ~handler-sym)
                     (ring.middleware.stacktrace/wrap-stacktrace)
                     (ring.middleware.reload-modified/wrap-reload-modified
-                      ~reload-dirs))
-                ~(if port (Integer/parseInt port))
+                     ~reload-dirs))
+                ~jetty-params
                 ~launch-browser
                 ~init-sym
-                ~destroy-sym))
+                ~destroy-sym
+                ~report-ports-sym))
          nil nil `(do (require 'leiningen.ring.run-server
                                'ring.middleware.stacktrace
                                'ring.middleware.reload-modified
                                '~handler-ns)
                       ~@(require-sym init-ns)
-                      ~@(require-sym destroy-ns)))))
+                      ~@(require-sym destroy-ns)
+                      ~@(require-sym report-ports-ns)))))
 
 (defn server
   "Start a Ring server and open a browser."
