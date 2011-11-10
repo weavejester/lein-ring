@@ -13,7 +13,6 @@
 (def suitable-ports (range 3000 3011))
 
 (defn- jetty-server [handler jetty-params]
-  ; (println jetty-params)
   (if (:port jetty-params)
     (run-jetty (wrap-stacktrace handler)
                (assoc jetty-params :join? false))

@@ -11,17 +11,17 @@
 
 (defn server-task
   "Shared logic for server and server-headless tasks."
-  [{:keys [ring] :as project} port launch-browser]
+  [project port launch-browser]
   (let [
         reload-dirs [(:source-path project)]
         [handler-sym handler-ns] (sym-and-ns project :handler)
         [init-sym init-ns]       (sym-and-ns project :init)
         [destroy-sym destroy-ns] (sym-and-ns project :destroy)
         [report-ports-sym report-ports-ns] (sym-and-ns project :report-ports)
-        jetty-params1 (dissoc ring :handler :init :destroy :report-ports :join)
+        adapter (-> project :ring :adapter)
         jetty-params (if port
-                       (assoc jetty-params1 :port (Integer/parseInt port))
-                       jetty-params1)]
+                       (assoc adapter :port (Integer/parseInt port))
+                       adapter)]
        (eval-in-project project
          `(do
             (leiningen.ring.run-server/run-server
