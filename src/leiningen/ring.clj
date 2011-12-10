@@ -16,4 +16,7 @@
        "server"          (apply server project args)
        "server-headless" (apply server-headless project args)
        "war"             (apply war project args)
-       "uberwar"         (apply uberwar project args))))
+       "uberwar"         (apply uberwar project args)
+                         (do
+                           (println (str "'" subtask "'") "is not a valid subtask\n")
+                           (ring [project])))))
