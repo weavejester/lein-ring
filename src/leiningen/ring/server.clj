@@ -19,16 +19,15 @@
        (eval-in-project project
          `(do (leiningen.ring.run-server/run-server
                 (-> (var ~handler-sym)
-                    (ring.middleware.stacktrace/wrap-stacktrace)
-                    (ring.middleware.reload-modified/wrap-reload-modified
-                      ~reload-dirs))
+                    (ring.middleware.reload/wrap-reload ~reload-dirs)
+                    (ring.middleware.stacktrace/wrap-stacktrace))
                 ~(if port (Integer/parseInt port))
                 ~launch-browser
                 ~init-sym
                 ~destroy-sym))
          nil nil `(do (require 'leiningen.ring.run-server
                                'ring.middleware.stacktrace
-                               'ring.middleware.reload-modified
+                               'ring.middleware.reload
                                '~handler-ns)
                       ~@(require-sym init-ns)
                       ~@(require-sym destroy-ns)))))

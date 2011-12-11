@@ -1,6 +1,5 @@
 (ns leiningen.ring.run-server
   (:use ring.adapter.jetty
-        ring.middleware.stacktrace
         [clojure.java.browse :only (browse-url)]))
 
 (defn- try-ports [func ports]
@@ -14,10 +13,8 @@
 
 (defn- jetty-server [handler port]
   (if port
-    (run-jetty (wrap-stacktrace handler)
-               {:port port, :join? false})
-    (try-ports #(jetty-server handler %)
-               suitable-ports)))
+    (run-jetty handler {:port port, :join? false})
+    (try-ports #(jetty-server handler %) suitable-ports)))
 
 (defn run-server [handler port launch-browser? init-fn destroy-fn]
   (when destroy-fn
