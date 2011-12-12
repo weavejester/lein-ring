@@ -32,7 +32,7 @@
       (jar-entries project))))
 
 (defn uberwar
-  "Create a $PROJECT-$VERSION.war with dependencies suitable for use in servlet containers."
+  "Create a $PROJECT-$VERSION.war with dependencies."
   ([project]
      (uberwar project (default-uberwar-name project)))
   ([project war-name]

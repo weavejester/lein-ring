@@ -203,7 +203,7 @@
       (dir-entry project "" (war-resources-path project)))))
 
 (defn war
-  "Create a $PROJECT-$VERSION.war file suitable for use in servlet containers."
+  "Create a $PROJECT-$VERSION.war file."
   ([project]
      (war project (default-war-name project)))
   ([project war-name]
