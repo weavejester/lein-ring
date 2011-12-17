@@ -6,4 +6,4 @@
   ([project]
      (server-headless project nil))
   ([project port]
-     (server-task project port false)))
+     (server-task project {:port port, :headless? true})))
