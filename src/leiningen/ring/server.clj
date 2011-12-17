@@ -11,10 +11,18 @@
              (symbol ns)
              s))))
 
+(defn env-options
+  "A map of options from environment variables"
+  []
+  (merge (if-let [p (System/getenv "PORT")] {:port p})
+         (if-let [p (System/getenv "SSLPORT")] {:ssl-port p})))
+
 (defn server-task
   "Shared logic for server and server-headless tasks."
   [project options]
-  (let [options (merge (:ring project) options)]
+  (let [options (merge (:ring project)
+                       (env-options)
+                       options)]
     (eval-in-project
      project
      `(leiningen.ring.run-server/run-server ~options)
@@ -30,6 +38,6 @@
 (defn server
   "Start a Ring server and open a browser."
   ([project]
-     (server project nil))
+     (server-task project {}))
   ([project port]
-     (server-task project {:port port, :headless? false})))
+     (server-task project {:port port})))
