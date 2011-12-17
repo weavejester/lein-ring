@@ -27,15 +27,19 @@
       wrap-stacktrace
       wrap-reload))
 
+(defn- jetty-options [{port :port :as options}]
+  (-> options
+      (assoc :join? false)
+      (assoc :port (Integer. port))))
+
 (def suitable-ports (range 3000 3011))
 
-(defn- start-jetty [{port :port :as options}]
+(defn- start-jetty [options]
   (let [handler (get-handler options)]
-    (if port
-      (run-jetty handler {:port (Integer. port), :join? false})
-      (try-ports
-       #(start-jetty (assoc options :port %))
-       suitable-ports))))
+    (if (:port options)
+      (run-jetty handler (jetty-options options))
+      (try-ports #(start-jetty (assoc options :port %))
+                 suitable-ports))))
 
 (defn- open-browser [server {headless? :headless?}]
   (let [connector (first (.getConnectors server))
