@@ -9,7 +9,8 @@ Ring handler into a standard war file.
 [1]: https://github.com/technomancy/leiningen
 [2]: https://github.com/mmcgrana/ring 
 
-## Usage
+
+## Install
 
 To use Lein-Ring, add it as a development dependency to your
 `project.clj` file:
@@ -24,7 +25,41 @@ your Ring handler:
 
 When this is set, you can use Lein-Ring's commands.
 
-### Starting a development web server
+
+## General options
+
+As well as the handler, you can specify several additional options via
+your `project.clj` file:
+
+* `:init` -
+  A function to be called once before your handler starts. It should
+  take no arguments. If you've compiled your Ring application into a
+  war-file, this function will be called when your handler servlet is
+  first initialized.
+
+* `:destroy` -
+  A function called before your handler exits or is unloaded. It
+  should take no arguments. If your Ring application has been compiled
+  into a war-file, then this will be called when your hander servlet
+  is destroyed.
+
+* `:adapter` -
+  A map of options to be passed to the Ring adapter. This has no
+  effect if you're deploying your application as a war-file.
+
+
+## Environment variables
+
+Lein-Ring pays attention to two environment variables:
+
+* `PORT`    - the port the web server uses for HTTP
+* `SSLPORT` - the port the web server uses for HTTPS
+
+These will override any options specified in the `project.clj` file,
+but won't override any options specified at the command line.
+
+
+## Starting a web server
 
 The following command will start a development web server, and opens a
 web browser to the root page:
@@ -46,7 +81,10 @@ it doesn't open a web browser:
 
     lein ring server-headless 4000
 
-### Compiling a war
+
+## War files
+
+### Compiling
 
 This next command will generate a war file from your handler:
 
@@ -65,23 +103,20 @@ the dependencies into the war:
 
     lein ring uberwar
 
-Currently the following options are supported:
+The following war-specific options are supported:
 
-* `:servlet-class` - The servlet class name.
+* `:servlet-class` -
+  The servlet class name.
+
 * `:servlet-name` -
   The name of the servlet (in web.xml). Defaults to the handler name.
+
 * `:url-pattern` -
   The url pattern of the servlet mapping (in web.xml). Defaults to "/*".
+
 * `:servlet-path-info?` -
   If true, a `:path-info` key is added to the request map. Defaults to true.
-* `:init` -
-  A hook to perform any one time initialization tasks. When generating
-  a servlet, a servlet context listener is created, and the hook is
-  called during its initialization. When running lein ring server,
-  it's called before the server starts. This function should take no
-  arguments.
-* `:destroy` -
-  A hook to perform shutdown tasks. It should also take no arguments.
+
 * `:listener-class` -
   Class used for servlet init/destroy functions. Called listener
   because underneath it uses a ServletContextListener.
