@@ -11,8 +11,15 @@
              (symbol ns)
              s))))
 
+(defn project-options
+  "A map of Ring options from the project.clj file."
+  [project]
+  (let [opts (:ring project)]
+    (merge (select-keys opts [:init :destroy :handler])
+           (:adapter opts))))
+
 (defn env-options
-  "A map of options from environment variables"
+  "A map of options from environment variables."
   []
   (merge (if-let [p (System/getenv "PORT")] {:port p})
          (if-let [p (System/getenv "SSLPORT")] {:ssl-port p})))
@@ -20,7 +27,7 @@
 (defn server-task
   "Shared logic for server and server-headless tasks."
   [project options]
-  (let [options (merge (:ring project)
+  (let [options (merge (project-options project)
                        (env-options)
                        options)]
     (eval-in-project
