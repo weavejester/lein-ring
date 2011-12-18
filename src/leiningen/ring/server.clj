@@ -15,14 +15,15 @@
   "A map of Ring options from the project.clj file."
   [project]
   (let [opts (:ring project)]
-    (merge (select-keys opts [:init :destroy :handler])
+    (merge (select-keys opts [:init :destroy :handler :dev-middleware])
            (:adapter opts))))
 
 (defn env-options
   "A map of options from environment variables."
   []
   (merge (if-let [p (System/getenv "PORT")] {:port p})
-         (if-let [p (System/getenv "SSLPORT")] {:ssl-port p})))
+         (if-let [p (System/getenv "SSLPORT")] {:ssl-port p})
+         {:environment (or (System/getenv "RING_ENV") "development")}))
 
 (defn server-task
   "Shared logic for server and server-headless tasks."

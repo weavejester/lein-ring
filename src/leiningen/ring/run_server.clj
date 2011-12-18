@@ -22,10 +22,14 @@
   (when init-fn
     (init-fn)))
 
-(defn- get-handler [{handler :handler}]
-  (-> handler
-      wrap-stacktrace
-      wrap-reload))
+(defn- get-handler [{:keys [handler dev-middleware environment]}]
+  (reduce
+   (fn [h m] (m h))
+   handler
+   (if (not= environment "production")
+     (or dev-middleware
+         [wrap-stacktrace
+          wrap-reload]))))
 
 (defn- jetty-options [{port :port :as options}]
   (-> options
@@ -41,13 +45,13 @@
       (try-ports #(start-jetty (assoc options :port %))
                  suitable-ports))))
 
-(defn- open-browser [server {headless? :headless?}]
+(defn- open-browser [server {:keys [headless? environment]}]
   (let [connector (first (.getConnectors server))
         host      (or (.getHost connector) "0.0.0.0")
         port      (.getPort connector)
         url-host  (if (= host "0.0.0.0") "127.0.0.1" host)]
     (println "Started server on port" port)
-    (when-not headless?
+    (when-not (or headless? (= environment "production"))
       (browse-url (str "http://" url-host ":" port)))))
 
 (defn run-server [options]
