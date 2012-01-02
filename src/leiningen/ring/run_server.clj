@@ -49,7 +49,7 @@
   (let [connector (first (.getConnectors server))
         host      (or (.getHost connector) "0.0.0.0")
         port      (.getPort connector)
-        url-host  (if (= host "0.0.0.0") "127.0.0.1" host)]
+        url-host  (if (= host "0.0.0.0") "localhost" host)]
     (println "Started server on port" port)
     (when-not (or headless? (= environment "production"))
       (browse-url (str "http://" url-host ":" port)))))
