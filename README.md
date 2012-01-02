@@ -50,7 +50,7 @@ your `project.clj` file:
 
 ## Environment variables
 
-Lein-Ring pays attention to two environment variables:
+Lein-Ring pays attention to several environment variables, including:
 
 * `PORT`    - the port the web server uses for HTTP
 * `SSLPORT` - the port the web server uses for HTTPS
@@ -66,8 +66,9 @@ web browser to the root page:
 
     lein ring server
 
-The server monitors your source directory for file modifications, so any
-altered files will automatically be reloaded.
+If the `RING_ENV` environment variable **not** set to "production",
+the server will monitor your source directory for file modifications,
+and any altered files will automatically be reloaded.
 
 By default, this command attempts to find a free port, starting at
 3000, but you can specify your own port as an argument:
