@@ -25,6 +25,17 @@
          (if-let [p (System/getenv "SSLPORT")] {:ssl-port p})
          {:environment (or (System/getenv "RING_ENV") "development")}))
 
+(defn make-vars
+  "Turn the symbols in an option map into vars. Necessary for reloading."
+  [options keys]
+  (reduce
+   (fn [m k]
+     (if-let [v (m k)]
+       (assoc m k `(var ~v))
+       m))
+   options
+   keys))
+
 (defn server-task
   "Shared logic for server and server-headless tasks."
   [project options]
@@ -33,7 +44,8 @@
                        options)]
     (eval-in-project
      project
-     `(leiningen.ring.run-server/run-server ~options)
+     `(leiningen.ring.run-server/run-server
+       ~(make-vars options [:handler :init :destroy]))
      nil nil
      (load-namespaces
       'leiningen.ring.run-server
