@@ -21,7 +21,7 @@
 
 (defn jar-entries [war project]
   (doseq [jar-file (jar-dependencies project)]
-    (let [dir-path (:library-path project)
+    (let [dir-path (.getParent jar-file)
           war-path (war/in-war-path "WEB-INF/lib/" dir-path jar-file)]
       (war/file-entry war project war-path jar-file))))
 
