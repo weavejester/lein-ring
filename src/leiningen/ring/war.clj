@@ -207,12 +207,11 @@
   ([project]
      (war project (default-war-name project)))
   ([project war-name]
-     (binding [compile/*silently* true]
-       (when (zero? (compile/compile project))
-         (let [war-path (war-file-path project war-name)]
-           (compile-servlet project)
-           (if (has-listener? project)
-             (compile-listener project))
-           (write-war project war-path)
-           (println "Created" war-path)
-           war-path)))))
+     (when (zero? (compile/compile project))
+       (let [war-path (war-file-path project war-name)]
+         (compile-servlet project)
+         (if (has-listener? project)
+           (compile-listener project))
+         (write-war project war-path)
+         (println "Created" war-path)
+         war-path))))

@@ -36,12 +36,11 @@
   ([project]
      (uberwar project (default-uberwar-name project)))
   ([project war-name]
-     (binding [compile/*silently* true]
-       (when (zero? (compile/compile project))
-         (let [war-path (war/war-file-path project war-name)]
-           (war/compile-servlet project)
-           (if (war/has-listener? project)
-             (war/compile-listener project))
-           (write-uberwar project war-path)
-           (println "Created" war-path)
-           war-path)))))
+     (when (zero? (compile/compile project))
+       (let [war-path (war/war-file-path project war-name)]
+         (war/compile-servlet project)
+         (if (war/has-listener? project)
+           (war/compile-listener project))
+         (write-uberwar project war-path)
+         (println "Created" war-path)
+         war-path))))
