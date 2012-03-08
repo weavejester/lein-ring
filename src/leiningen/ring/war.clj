@@ -2,7 +2,7 @@
   (:require [leiningen.compile :as compile]
             [clojure.java.io :as io]
             [clojure.string :as string])
-  (:use [clojure.contrib.prxml :only (prxml)])
+  (:use [clojure.data.xml :only [element indent-str]])
   (:import [java.util.jar Manifest
                           JarEntry
                           JarOutputStream]
@@ -94,18 +94,22 @@
       "/*"))
 
 (defn make-web-xml [project]
-  (with-out-str
-    (prxml
+  (letfn [(xml [[tag & content :as x]]
+            (if (keyword? tag)
+              (apply element tag {} (map xml content))
+              x))]
+    (indent-str
+     (xml
       [:web-app
-       (if (has-listener? project)
+       (when (has-listener? project)
          [:listener
           [:listener-class (listener-class project)]])
-        [:servlet
-          [:servlet-name  (servlet-name project)]
-          [:servlet-class (servlet-class project)]]
-        [:servlet-mapping
-          [:servlet-name (servlet-name project)]
-          [:url-pattern (url-pattern project)]]])))
+       [:servlet
+        [:servlet-name  (servlet-name project)]
+        [:servlet-class (servlet-class project)]]
+       [:servlet-mapping
+        [:servlet-name (servlet-name project)]
+        [:url-pattern (url-pattern project)]]]))))
 
 (defn source-file [project namespace]
   (io/file (:compile-path project)
