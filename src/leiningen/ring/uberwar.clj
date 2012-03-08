@@ -7,13 +7,17 @@
   (or (:uberjar-name project)
       (str (:name project) "-" (:version project) "-standalone.war")))
 
+(defn get-classpath [project]
+  (if-let [get-cp (resolve 'leiningen.core.classpath/get-classpath)]
+    (get-cp project)
+    (->> (:library-path project) io/file .listFiles (map str))))
+
 (defn jar-dependencies [project]
-  (->> (:library-path project)
-       (io/file)
-       (.listFiles)
-       (filter #(.endsWith (str %) ".jar"))
-       ;; Servlet container will have it's own servlet-api implementation
-       (remove #(.startsWith (.getName %) "servlet-api-"))))
+  (for [file (get-classpath project)
+        :when (and (.endsWith file ".jar")
+                   ;; Servlet container will have it's own servlet-api impl
+                   (not (.startsWith file "servlet-api-")))]
+    (io/file file)))
 
 (defn jar-entries [war project]
   (doseq [jar-file (jar-dependencies project)]
@@ -29,7 +33,7 @@
     (doseq [path (concat [(:source-path project)] (:source-paths project)
                          [(:resources-path project)] (:resource-paths project))
             :when path]
-      (dir-entry war-stream project "WEB-INF/classes/" path))
+      (war/dir-entry war-stream project "WEB-INF/classes/" path))
     (war/dir-entry war-stream project "" (war/war-resources-path project))
     (jar-entries war-stream project)))
 

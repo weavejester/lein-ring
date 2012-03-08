@@ -15,7 +15,7 @@
       (str (:name project) "-" (:version project) ".war")))
 
 (defn war-file-path [project war-name]
-  (let [target-dir (:target-dir project)]
+  (let [target-dir (or (:target-dir project) (:target-path project))]
     (.mkdirs (io/file target-dir))
     (str target-dir "/" war-name)))
 
@@ -175,7 +175,7 @@
 
 (defn in-war-path [war-path root file]
   (str war-path
-       (-> (.toURI (io/file root)) 
+       (-> (.toURI (io/file root))
            (.relativize (.toURI file))
            (.getPath))))
 
