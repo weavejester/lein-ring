@@ -197,10 +197,13 @@
   (with-open [war-stream (create-war project war-path)]
     (doto war-stream
       (str-entry "WEB-INF/web.xml" (make-web-xml project))
-      (dir-entry project "WEB-INF/classes/" (:compile-path project))
-      (dir-entry project "WEB-INF/classes/" (:source-path project))
-      (dir-entry project "WEB-INF/classes/" (:resources-path project))
-      (dir-entry project "" (war-resources-path project)))))
+      (dir-entry project "WEB-INF/classes/" (:compile-path project)))
+    (doseq [path (concat [(:source-path project)] (:source-paths project)
+                         [(:resources-path project)] (:resource-paths project))
+            :when path]
+      (dir-entry war-stream project "WEB-INF/classes/" path))
+    (dir-entry war-stream project "" (war-resources-path project))
+    war-stream))
 
 (defn war
   "Create a $PROJECT-$VERSION.war file."

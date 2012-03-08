@@ -25,11 +25,13 @@
   (with-open [war-stream (war/create-war project war-path)]
     (doto war-stream
       (war/str-entry "WEB-INF/web.xml" (war/make-web-xml project))
-      (war/dir-entry project "WEB-INF/classes/" (:compile-path project))
-      (war/dir-entry project "WEB-INF/classes/" (:source-path project))
-      (war/dir-entry project "WEB-INF/classes/" (:resources-path project))
-      (war/dir-entry project "" (war/war-resources-path project))
-      (jar-entries project))))
+      (war/dir-entry project "WEB-INF/classes/" (:compile-path project)))
+    (doseq [path (concat [(:source-path project)] (:source-paths project)
+                         [(:resources-path project)] (:resource-paths project))
+            :when path]
+      (dir-entry war-stream project "WEB-INF/classes/" path))
+    (war/dir-entry war-stream project "" (war/war-resources-path project))
+    (jar-entries war-stream project)))
 
 (defn uberwar
   "Create a $PROJECT-$VERSION.war with dependencies."
