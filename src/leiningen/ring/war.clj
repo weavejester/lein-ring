@@ -15,7 +15,7 @@
       (str (:name project) "-" (:version project) ".war")))
 
 (defn war-file-path [project war-name]
-  (let [target-dir (:target-dir project)]
+  (let [target-dir (or (:target-dir project) (:target-path project))]
     (.mkdirs (io/file target-dir))
     (str target-dir "/" war-name)))
 
@@ -175,7 +175,7 @@
 
 (defn in-war-path [war-path root file]
   (str war-path
-       (-> (.toURI (io/file root)) 
+       (-> (.toURI (io/file root))
            (.relativize (.toURI file))
            (.getPath))))
 
@@ -197,22 +197,24 @@
   (with-open [war-stream (create-war project war-path)]
     (doto war-stream
       (str-entry "WEB-INF/web.xml" (make-web-xml project))
-      (dir-entry project "WEB-INF/classes/" (:compile-path project))
-      (dir-entry project "WEB-INF/classes/" (:source-path project))
-      (dir-entry project "WEB-INF/classes/" (:resources-path project))
-      (dir-entry project "" (war-resources-path project)))))
+      (dir-entry project "WEB-INF/classes/" (:compile-path project)))
+    (doseq [path (concat [(:source-path project)] (:source-paths project)
+                         [(:resources-path project)] (:resource-paths project))
+            :when path]
+      (dir-entry war-stream project "WEB-INF/classes/" path))
+    (dir-entry war-stream project "" (war-resources-path project))
+    war-stream))
 
 (defn war
   "Create a $PROJECT-$VERSION.war file."
   ([project]
      (war project (default-war-name project)))
   ([project war-name]
-     (binding [compile/*silently* true]
-       (when (zero? (compile/compile project))
-         (let [war-path (war-file-path project war-name)]
-           (compile-servlet project)
-           (if (has-listener? project)
-             (compile-listener project))
-           (write-war project war-path)
-           (println "Created" war-path)
-           war-path)))))
+     (when (zero? (compile/compile project))
+       (let [war-path (war-file-path project war-name)]
+         (compile-servlet project)
+         (if (has-listener? project)
+           (compile-listener project))
+         (write-war project war-path)
+         (println "Created" war-path)
+         war-path))))
