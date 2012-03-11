@@ -12,14 +12,14 @@ Ring handler into a standard war file.
 
 ## Install
 
-To use Lein-Ring, add it as a development dependency to your
-`project.clj` file:
+To use Lein-Ring, add it as a plugin to your `project.clj` file or
+your global profile:
 
-    :dev-dependencies [[lein-ring "0.5.4"]]
+    :plugins [[lein-ring "0.6.0-SNAPSHOT"]]
 
-And then add a new `:ring` key that contains a map of configuration
-options. At minimum there must be a `:handler` key that references
-your Ring handler:
+Then add a new `:ring` key to your `project.clj` file that contains a
+map of configuration options. At minimum there must be a `:handler`
+key that references your Ring handler:
 
     :ring {:handler hello-world.core/handler}
 
@@ -97,7 +97,7 @@ your application packaged up in a war file.
 Like the `lein jar` command, you can specify the filename being
 generated as an additional option:
 
-    lein ring war my-app.jar
+    lein ring war my-app.war
 
 Also provided is a `lein ring uberwar` command, which packages up all
 the dependencies into the war:
