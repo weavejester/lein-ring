@@ -6,4 +6,4 @@
   ([project]
      (server-task project {:headless? true}))
   ([project port]
-     (server-task project {:port port, :headless? true})))
+     (server-task project {:port (Integer. port), :headless? true})))

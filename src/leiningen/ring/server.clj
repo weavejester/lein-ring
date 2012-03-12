@@ -29,4 +29,4 @@
   ([project]
      (server-task project {}))
   ([project port]
-     (server-task project {:port port})))
+     (server-task project {:port (Integer. port)})))
