@@ -1,5 +1,4 @@
-(ns leiningen.ring.server
-  (:use leiningen.core.eval))
+(ns leiningen.ring.server)
 
 (defn load-namespaces
   "Create require forms for each of the supplied symbols. This exists because
@@ -10,6 +9,20 @@
         `'~(if-let [ns (namespace s)]
              (symbol ns)
              s))))
+
+(defn eval-in-project
+  "Support eval-in-project in both Leiningen 1.x and 2.x."
+  [project form init]
+  (let [[eip two?] (or (try (require 'leiningen.core.eval)
+                            [(resolve 'leiningen.core.eval/eval-in-project)
+                             true]
+                            (catch java.io.FileNotFoundException _))
+                       (try (require 'leiningen.compile)
+                            [(resolve 'leiningen.compile/eval-in-project)]
+                            (catch java.io.FileNotFoundException _)))]
+    (if two?
+      (eip project form init)
+      (eip project form nil nil init))))
 
 (defn server-task
   "Shared logic for server and server-headless tasks."
