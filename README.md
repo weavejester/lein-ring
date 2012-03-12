@@ -25,6 +25,8 @@ key that references your Ring handler:
 
 When this is set, you can use Lein-Ring's commands.
 
+If you're using an older version of Leiningen (prior to 1.7.0), you
+can install place `[lein-ring "0.6.0"]` in `:dev-dependencies`.
 
 ## General options
 
