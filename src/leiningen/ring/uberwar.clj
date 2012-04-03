@@ -13,11 +13,13 @@
     (->> (:library-path project) io/file .listFiles (map str))))
 
 (defn jar-dependencies [project]
-  (for [file (get-classpath project)
-        :when (and (.endsWith file ".jar")
+  (for [pathname (get-classpath project)
+        :let [file (io/file pathname)
+              fname (.getName file)]
+        :when (and (.endsWith fname ".jar")
                    ;; Servlet container will have it's own servlet-api impl
-                   (not (.startsWith file "servlet-api-")))]
-    (io/file file)))
+                   (not (.startsWith fname "servlet-api-")))]
+    file))
 
 (defn jar-entries [war project]
   (doseq [jar-file (jar-dependencies project)]
