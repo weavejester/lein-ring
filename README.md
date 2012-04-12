@@ -125,6 +125,9 @@ The following war-specific options are supported:
   Class used for servlet init/destroy functions. Called listener
   because underneath it uses a ServletContextListener.
 
+* `:web-xml` -
+  web.xml file to use in place of auto-generated version (relative to project root).
+
 These keys should be placed under the `:ring` key in `project.clj`,
 and are optional values. If not supplied, default values will be used instead.
 

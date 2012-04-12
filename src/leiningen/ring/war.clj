@@ -96,18 +96,21 @@
       "/*"))
 
 (defn make-web-xml [project]
-  (indent-str
-   (sexp-as-element
-    [:web-app
-     (if (has-listener? project)
-       [:listener
-        [:listener-class (listener-class project)]])
-     [:servlet
-      [:servlet-name  (servlet-name project)]
-      [:servlet-class (servlet-class project)]]
-     [:servlet-mapping
-      [:servlet-name (servlet-name project)]
-      [:url-pattern (url-pattern project)]]])))
+  (let [ring-options (:ring project)]
+    (if (contains? ring-options :web-xml)
+      (slurp (:web-xml ring-options))
+      (indent-str
+        (sexp-as-element
+          [:web-app
+           (if (has-listener? project)
+             [:listener
+              [:listener-class (listener-class project)]])
+           [:servlet
+            [:servlet-name  (servlet-name project)]
+            [:servlet-class (servlet-class project)]]
+           [:servlet-mapping
+            [:servlet-name (servlet-name project)]
+            [:url-pattern (url-pattern project)]]])))))
 
 (defn source-file [project namespace]
   (io/file (:compile-path project)
