@@ -225,11 +225,12 @@
   ([project]
      (war project (default-war-name project)))
   ([project war-name]
-     (when (zero? (compile/compile project))
-       (let [war-path (war-file-path project war-name)]
-         (compile-servlet project)
-         (if (has-listener? project)
-           (compile-listener project))
-         (write-war project war-path)
-         (println "Created" war-path)
-         war-path))))
+     (let [res (compile/compile project)]
+       (when-not (and (number? res) (pos? res))
+         (let [war-path (war-file-path project war-name)]
+           (compile-servlet project)
+           (if (has-listener? project)
+             (compile-listener project))
+           (write-war project war-path)
+           (println "Created" war-path)
+           war-path)))))
