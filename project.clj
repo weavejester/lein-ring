@@ -1,4 +1,4 @@
-(defproject lein-ring "0.6.4"
+(defproject lein-ring "0.6.5"
   :description "Leiningen Ring plugin"
   :url "https://github.com/weavejester/lein-ring"
   :dependencies [[org.clojure/clojure "1.2.1"]
