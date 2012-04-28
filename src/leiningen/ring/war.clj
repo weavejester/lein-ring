@@ -149,7 +149,9 @@
 (defn compile-servlet [project]
   (let [handler-sym (get-in project [:ring :handler])
         handler-ns  (symbol (namespace handler-sym))
-        servlet-ns  (symbol (servlet-ns project))]
+        servlet-ns  (symbol (servlet-ns project))
+        project     (update-in project [:dependencies]
+                               conj ['ring/ring-servlet "1.0.2"])]
     (compile-form project servlet-ns
       `(do (ns ~servlet-ns
              (:require ring.util.servlet ~handler-ns)
