@@ -149,9 +149,7 @@
 (defn compile-servlet [project]
   (let [handler-sym (get-in project [:ring :handler])
         handler-ns  (symbol (namespace handler-sym))
-        servlet-ns  (symbol (servlet-ns project))
-        project     (update-in project [:dependencies]
-                               conj ['ring/ring-servlet "1.0.2"])]
+        servlet-ns  (symbol (servlet-ns project))]
     (compile-form project servlet-ns
       `(do (ns ~servlet-ns
              (:require ring.util.servlet ~handler-ns)
@@ -222,13 +220,18 @@
     (dir-entry war-stream project "" (war-resources-path project))
     war-stream))
 
+(defn add-servlet-dep [project]
+  (update-in project [:dependencies]
+             conj ['ring/ring-servlet "1.0.2"]))
+
 (defn war
   "Create a $PROJECT-$VERSION.war file."
   ([project]
      (war project (default-war-name project)))
   ([project war-name]
-     (let [res (compile/compile project)]
-       (when-not (and (number? res) (pos? res))
+     (let [project (add-servlet-dep project)
+           result  (compile/compile project)]
+       (when-not (and (number? result) (pos? result))
          (let [war-path (war-file-path project war-name)]
            (compile-servlet project)
            (if (has-listener? project)

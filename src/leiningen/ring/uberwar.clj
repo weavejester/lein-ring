@@ -44,8 +44,9 @@
   ([project]
      (uberwar project (default-uberwar-name project)))
   ([project war-name]
-     (let [res (compile/compile project)]
-       (when-not (and (number? res) (pos? res))
+     (let [project (war/add-servlet-dep project)
+           result  (compile/compile project)]
+       (when-not (and (number? result) (pos? result))
          (let [war-path (war/war-file-path project war-name)]
            (war/compile-servlet project)
            (if (war/has-listener? project)
