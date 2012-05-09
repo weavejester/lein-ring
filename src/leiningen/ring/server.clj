@@ -29,7 +29,7 @@
   [project options]
   (let [project (update-in project [:ring] merge options)]
     (eval-in-project
-     (update-in project [:dependencies] conj ['ring-server "0.2.1"])
+     (update-in project [:dependencies] conj ['ring-server "0.2.2"])
      `(ring.server.leiningen/serve '~project)
      (load-namespaces
       'ring.server.leiningen

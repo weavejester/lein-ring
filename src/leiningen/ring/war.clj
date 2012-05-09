@@ -222,7 +222,7 @@
 
 (defn add-servlet-dep [project]
   (update-in project [:dependencies]
-             conj ['ring/ring-servlet "1.0.2"]))
+             conj ['ring/ring-servlet "1.1.0"]))
 
 (defn war
   "Create a $PROJECT-$VERSION.war file."
