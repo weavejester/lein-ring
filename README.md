@@ -128,6 +128,11 @@ The following war-specific options are supported:
 * `:web-xml` -
   web.xml file to use in place of auto-generated version (relative to project root).
 
+* `:uberwar-exclusions` -
+  A list of regular expressions that will be matched against any jars included
+  in this project's uberwar. Matching jars will be excluded from the final war.
+  By default, this list contains only #"servlet-api-.+\.jar".
+
 These keys should be placed under the `:ring` key in `project.clj`,
 and are optional values. If not supplied, default values will be used instead.
 
