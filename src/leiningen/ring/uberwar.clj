@@ -3,6 +3,8 @@
             [leiningen.compile :as compile]
             [clojure.java.io :as io]))
 
+(def default-uberwar-exclusions [#"servlet-api-.+\.jar"])
+
 (defn default-uberwar-name [project]
   (or (:uberjar-name project)
       (str (:name project) "-" (:version project) "-standalone.war")))
@@ -16,9 +18,11 @@
   (for [pathname (get-classpath project)
         :let [file (io/file pathname)
               fname (.getName file)]
-        :when (and (.endsWith fname ".jar")
-                   ;; Servlet container will have it's own servlet-api impl
-                   (not (.startsWith fname "servlet-api-")))]
+        :when (not-any?
+                #(re-matches % fname)
+                (or
+                  (get-in project [:ring :uberwar-exclusions])
+                  default-uberwar-exclusions))]
     file))
 
 (defn jar-entries [war project]
