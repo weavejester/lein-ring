@@ -69,9 +69,9 @@ web browser to the root page:
 
     lein ring server
 
-If the `RING_ENV` environment variable **not** set to "production",
-the server will monitor your source directory for file modifications,
-and any altered files will automatically be reloaded.
+If the `LEIN_NO_DEV` environment variable is **not** set, the server
+will monitor your source directory for file modifications, and any
+altered files will automatically be reloaded.
 
 By default, this command attempts to find a free port, starting at
 3000, but you can specify your own port as an argument:
