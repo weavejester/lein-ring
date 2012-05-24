@@ -25,7 +25,7 @@
   (or (re-find #"^\.?#" (.getName file))
       (re-find #"~$" (.getName file))
       (some #(re-find % war-path)
-            (get-in project [:ring :war-exclusions]))))
+            (get-in project [:ring :war-exclusions] [#"(^|/)\."]))))
 
 (defn- to-byte-stream [^String s]
   (ByteArrayInputStream. (.getBytes s)))
