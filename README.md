@@ -86,6 +86,26 @@ it doesn't open a web browser:
     lein ring server-headless 4000
 
 
+## Web server options
+
+The following options affect the behavior of the web server started by
+`lein ring server`:
+
+* `:port` - The server port or port range
+
+* `:stacktraces?` -
+  If true, display a stacktrace when an exception is thrown.
+  Defaults to true in development mode, false in production.
+
+* `:auto-reload?` -
+  If true, automatically reload modified source files. Defaults to
+  true in development mode, false in production.
+
+* `:auto-refresh?` -
+  If true, automatically refresh the browser when source or resource
+  files are modified. Defaults to false.
+
+
 ## War files
 
 ### Compiling
