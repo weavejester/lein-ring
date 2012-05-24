@@ -129,6 +129,10 @@ the dependencies into the war:
 
 The following war-specific options are supported:
 
+* `:war-exclusions` -
+  A list of regular expressions for excluding files from the target
+  war. Defaults to excluding hidden files.
+
 * `:servlet-class` -
   The servlet class name.
 
