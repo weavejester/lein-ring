@@ -3,7 +3,7 @@
             [leiningen.compile :as compile]
             [clojure.java.io :as io]
             [clojure.string :as string])
-  (:use [leiningen.ring.server :only (eval-in-project)]
+  (:use [leinjacker.eval :only (eval-in-project)]
         [clojure.data.xml :only [sexp-as-element indent-str]])
   (:import [java.util.jar Manifest
                           JarEntry
