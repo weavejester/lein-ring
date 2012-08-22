@@ -1,5 +1,6 @@
 (ns leiningen.ring.server
-  (:use [leinjacker.eval :only (eval-in-project)]))
+  (:use [leinjacker.eval :only (eval-in-project)]
+        leiningen.ring.util))
 
 (defn load-namespaces
   "Create require forms for each of the supplied symbols. This exists because
@@ -14,6 +15,7 @@
 (defn server-task
   "Shared logic for server and server-headless tasks."
   [project options]
+  (ensure-handler-set! project)
   (let [project (update-in project [:ring] merge options)]
     (eval-in-project
      (update-in project [:dependencies] conj ['ring-server "0.2.4"])

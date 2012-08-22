@@ -4,7 +4,8 @@
             [clojure.java.io :as io]
             [clojure.string :as string])
   (:use [leinjacker.eval :only (eval-in-project)]
-        [clojure.data.xml :only [sexp-as-element indent-str]])
+        [clojure.data.xml :only [sexp-as-element indent-str]]
+        leiningen.ring.util)
   (:import [java.util.jar Manifest
                           JarEntry
                           JarOutputStream]
@@ -229,6 +230,7 @@
   ([project]
      (war project (default-war-name project)))
   ([project war-name]
+     (ensure-handler-set! project)
      (let [project (add-servlet-dep project)
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))

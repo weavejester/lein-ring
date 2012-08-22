@@ -1,4 +1,5 @@
 (ns leiningen.ring.uberwar
+  (:use leiningen.ring.util)
   (:require [leiningen.ring.war :as war]
             [leiningen.compile :as compile]
             [clojure.java.io :as io]))
@@ -44,6 +45,7 @@
   ([project]
      (uberwar project (default-uberwar-name project)))
   ([project war-name]
+     (ensure-handler-set! project)
      (let [project (war/add-servlet-dep project)
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))
