@@ -15,11 +15,11 @@ Ring handler into a standard war file.
 To use Lein-Ring, add it as a plugin to your `project.clj` file or
 your global profile:
 
-    :plugins [[lein-ring "0.7.4"]]
+    :plugins [[lein-ring "0.7.5"]]
 
 Or, if you are using a version of Leiningen prior to 1.7.0:
 
-    :dev-dependencies [[lein-ring "0.7.4"]]
+    :dev-dependencies [[lein-ring "0.7.5"]]
 
 Then add a new `:ring` key to your `project.clj` file that contains a
 map of configuration options. At minimum there must be a `:handler`
