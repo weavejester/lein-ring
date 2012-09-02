@@ -19,7 +19,7 @@
   (ensure-handler-set! project)
   (let [project (update-in project [:ring] merge options)]
     (eval-in-project
-     (deps/add-if-missing project '[ring-server "0.2.4"])
+     (deps/add-if-missing project '[ring-server "0.2.5"])
      `(ring.server.leiningen/serve
        '~(select-keys project [:ring]))
      (load-namespaces
