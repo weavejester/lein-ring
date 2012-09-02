@@ -1,4 +1,5 @@
 (ns leiningen.ring.server
+  (:require [leinjacker.deps :as deps])
   (:use [leinjacker.eval :only (eval-in-project)]
         leiningen.ring.util))
 
@@ -18,7 +19,7 @@
   (ensure-handler-set! project)
   (let [project (update-in project [:ring] merge options)]
     (eval-in-project
-     (update-in project [:dependencies] conj ['ring-server "0.2.4"])
+     (deps/add-if-missing project '[ring-server "0.2.4"])
      `(ring.server.leiningen/serve
        '~(select-keys project [:ring]))
      (load-namespaces
