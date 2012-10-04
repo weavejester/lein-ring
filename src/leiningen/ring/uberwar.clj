@@ -5,8 +5,11 @@
             [clojure.java.io :as io]))
 
 (defn default-uberwar-name [project]
-  (or (:uberjar-name project)
-      (str (:name project) "-" (:version project) "-standalone.war")))
+  (or (get-in project [:ring :war-name])
+      (:uberjar-name project)
+      (if (war/explode-war? project)
+        (str (war/basic-war-name project) "-standalone"))
+      (str (war/basic-war-name project) "-standalone.war")))
 
 (defn get-classpath [project]
   (if-let [get-cp (resolve 'leiningen.core.classpath/get-classpath)]
@@ -47,12 +50,13 @@
   ([project war-name]
      (ensure-handler-set! project)
      (let [project (war/add-servlet-dep project)
-           result  (compile/compile project)]
+           result (compile/compile project)]
        (when-not (and (number? result) (pos? result))
          (let [war-path (war/war-file-path project war-name)]
            (war/compile-servlet project)
            (if (war/has-listener? project)
              (war/compile-listener project))
-           (write-uberwar project war-path)
+           (war/make-war project write-uberwar war-path)
            (println "Created" war-path)
            war-path)))))
+
