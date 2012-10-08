@@ -7,11 +7,11 @@
         [clojure.data.xml :only [sexp-as-element indent-str]]
         leiningen.ring.util)
   (:import [java.util.jar Manifest
-                          JarEntry
-                          JarOutputStream]
+            JarEntry
+            JarOutputStream]
            [java.io BufferedOutputStream 
-                    FileOutputStream 
-                    ByteArrayInputStream]))
+            FileOutputStream 
+            ByteArrayInputStream]))
 
 (defn default-war-name [project]
   (or (get-in project [:ring :war-name])
@@ -101,17 +101,17 @@
     (if (contains? ring-options :web-xml)
       (slurp (:web-xml ring-options))
       (indent-str
-        (sexp-as-element
-          [:web-app
-           (if (has-listener? project)
-             [:listener
-              [:listener-class (listener-class project)]])
-           [:servlet
-            [:servlet-name  (servlet-name project)]
-            [:servlet-class (servlet-class project)]]
-           [:servlet-mapping
-            [:servlet-name (servlet-name project)]
-            [:url-pattern (url-pattern project)]]])))))
+       (sexp-as-element
+        [:web-app
+         (if (has-listener? project)
+           [:listener
+            [:listener-class (listener-class project)]])
+         [:servlet
+          [:servlet-name  (servlet-name project)]
+          [:servlet-class (servlet-class project)]]
+         [:servlet-mapping
+          [:servlet-name (servlet-name project)]
+          [:url-pattern (url-pattern project)]]])))))
 
 (defn source-file [project namespace]
   (io/file (:compile-path project)
@@ -135,16 +135,16 @@
     (with-open [out (io/writer out-file)]
       (binding [*out* out] (prn form))))
   (eval-in-project project
-    `(do (clojure.core/compile '~namespace) nil)
-    nil))
+                   `(do (clojure.core/compile '~namespace) nil)
+                   nil))
 
 (defn generate-handler [project handler-sym]
   (if (get-in project [:ring :servlet-path-info?] true)
     `(fn [request#]
        (~handler-sym
-         (assoc request#
-           :path-info (.getPathInfo (:servlet-request request#))
-           :context   (.getContextPath (:servlet-request request#)))))
+        (assoc request#
+          :path-info (.getPathInfo (:servlet-request request#))
+          :context   (.getContextPath (:servlet-request request#)))))
     handler-sym))
 
 (defn compile-servlet [project]
@@ -152,11 +152,11 @@
         handler-ns  (symbol (namespace handler-sym))
         servlet-ns  (symbol (servlet-ns project))]
     (compile-form project servlet-ns
-      `(do (ns ~servlet-ns
-             (:require ring.util.servlet ~handler-ns)
-             (:gen-class :extends javax.servlet.http.HttpServlet))
-           (ring.util.servlet/defservice
-             ~(generate-handler project handler-sym))))))
+                  `(do (ns ~servlet-ns
+                         (:require ring.util.servlet ~handler-ns)
+                         (:gen-class :extends javax.servlet.http.HttpServlet))
+                       (ring.util.servlet/defservice
+                         ~(generate-handler project handler-sym))))))
 
 (defn compile-listener [project]
   (let [init-sym    (get-in project [:ring :init])
@@ -165,17 +165,17 @@
         destroy-ns  (and destroy-sym (symbol (namespace destroy-sym)))
         project-ns  (symbol (listener-ns project))]
     (compile-form project project-ns
-      `(do (ns ~project-ns
-             (:require ~@(set (remove nil? [init-ns destroy-ns])))
-             (:gen-class :implements [javax.servlet.ServletContextListener]))
-           ~(let [servlet-context-event (gensym)]
-              `(do
-                 (defn ~'-contextInitialized [this# ~servlet-context-event]
-                   ~(if init-sym
-                      `(~init-sym)))
-                 (defn ~'-contextDestroyed [this# ~servlet-context-event]
-                   ~(if destroy-sym
-                      `(~destroy-sym)))))))))
+                  `(do (ns ~project-ns
+                         (:require ~@(set (remove nil? [init-ns destroy-ns])))
+                         (:gen-class :implements [javax.servlet.ServletContextListener]))
+                       ~(let [servlet-context-event (gensym)]
+                          `(do
+                             (defn ~'-contextInitialized [this# ~servlet-context-event]
+                               ~(if init-sym
+                                  `(~init-sym)))
+                             (defn ~'-contextDestroyed [this# ~servlet-context-event]
+                               ~(if destroy-sym
+                                  `(~destroy-sym)))))))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
@@ -223,7 +223,10 @@
 
 (defn add-servlet-dep [project]
   (update-in project [:dependencies]
-             conj ['ring/ring-servlet "1.1.0"]))
+             (fn [dependencies]
+               (if (not-any? #(= (first %) 'ring/ring-servlet) dependencies)
+                 (conj dependencies ['ring/ring-servlet "1.1.0"])
+                 dependencies))))
 
 (defn war
   "Create a $PROJECT-$VERSION.war file."
