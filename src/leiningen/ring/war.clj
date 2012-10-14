@@ -9,13 +9,22 @@
   (:import [java.util.jar Manifest
                           JarEntry
                           JarOutputStream]
-           [java.io BufferedOutputStream 
+           [java.io BufferedOutputStream
+                    File
                     FileOutputStream 
-                    ByteArrayInputStream]))
+                    ByteArrayInputStream]
+           [java.util.zip ZipFile]))
+
+(defn explode-war? [project]
+  (get-in project [:ring :war-explode]))
+
+(defn basic-war-name [project]
+  (str (:name project) "-" (:version project)))
 
 (defn default-war-name [project]
   (or (get-in project [:ring :war-name])
-      (str (:name project) "-" (:version project) ".war")))
+      (if (explode-war? project) (basic-war-name project))
+      (str (basic-war-name project) ".war")))
 
 (defn war-file-path [project war-name]
   (let [target-dir (or (:target-dir project) (:target-path project))]
@@ -218,12 +227,43 @@
                          [(:resources-path project)] (:resource-paths project))
             :when path]
       (dir-entry war-stream project "WEB-INF/classes/" path))
-    (dir-entry war-stream project "" (war-resources-path project))
-    war-stream))
+    (dir-entry war-stream project "" (war-resources-path project))))
 
 (defn add-servlet-dep [project]
   (update-in project [:dependencies]
              conj ['ring/ring-servlet "1.1.0"]))
+
+(defn delete-recursive [file]
+  (if (.isDirectory file)
+    (dorun (map delete-recursive (.listFiles file))))
+  (.delete file))
+
+(defn unzip-entry [zip-file output-directory zip-entry]
+  (let [entry-path (.getName zip-entry)
+        output-file (io/file output-directory entry-path)]
+    (if-let [parent (.getParentFile output-file)]
+      (.mkdirs parent))
+    (with-open [data (.getInputStream zip-file zip-entry)]
+      (io/copy data output-file))))
+
+(defn unzip [input-path output-path]
+  (let [input-file (ZipFile. input-path)
+        zip-entries (enumeration-seq (.entries input-file))
+        output-directory (io/file output-path)]
+    (dorun (map (partial unzip-entry input-file output-directory) zip-entries))))
+
+(defn explode [tmp-path war-path]
+  (delete-recursive (io/file war-path))
+  (unzip tmp-path war-path))
+
+(defn make-war [project write-war-fn war-path]
+  (let [tmp-path (File/createTempFile (basic-war-name project) ".war")]
+    (write-war-fn project tmp-path)
+    (if (explode-war? project)
+      (explode tmp-path war-path)
+      (io/copy tmp-path war-path))
+    (io/delete-file tmp-path)
+    war-path))
 
 (defn war
   "Create a $PROJECT-$VERSION.war file."
@@ -238,6 +278,6 @@
            (compile-servlet project)
            (if (has-listener? project)
              (compile-listener project))
-           (write-war project war-path)
+           (make-war project write-war war-path)
            (println "Created" war-path)
            war-path)))))

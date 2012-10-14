@@ -152,6 +152,15 @@ The following war-specific options are supported:
 * `:web-xml` -
   web.xml file to use in place of auto-generated version (relative to project root).
 
+* `:war-explode` -
+  If true, war will be created in "exploded" form, i.e. as a directory. Defaults
+  to false.
+
+* `:war-name` -
+  This has the same effect as specifying the filename as an argument to `lein
+  ring war` or `lein ring uberwar`. Note: `lein ring uberwar` also respects
+  the `:uberjar` key in `project.clj`.
+
 These keys should be placed under the `:ring` key in `project.clj`,
 and are optional values. If not supplied, default values will be used instead.
 
