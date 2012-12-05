@@ -188,8 +188,8 @@
     (doto war-stream
       (str-entry "WEB-INF/web.xml" (make-web-xml project))
       (dir-entry project "WEB-INF/classes/" (:compile-path project)))
-    (doseq [path (concat [(:source-path project)] (:source-paths project)
-                         [(:resources-path project)] (:resource-paths project))
+    (doseq [path (distinct (concat [(:source-path project)] (:source-paths project)
+                                   [(:resources-path project)] (:resource-paths project)))
             :when path]
       (dir-entry war-stream project "WEB-INF/classes/" path))
     (dir-entry war-stream project "" (war-resources-path project))
