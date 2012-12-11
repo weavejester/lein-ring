@@ -1,11 +1,9 @@
 (ns leiningen.ring.war
-  (:require leiningen.deps
-            [leiningen.compile :as compile]
+  (:require [leiningen.compile :as compile]
             [clojure.java.io :as io]
             [clojure.string :as string]
             [leinjacker.deps :as deps])
-  (:use [leinjacker.eval :only (eval-in-project)]
-        [clojure.data.xml :only [sexp-as-element indent-str]]
+  (:use [clojure.data.xml :only [sexp-as-element indent-str]]
         leiningen.ring.util)
   (:import [java.util.jar Manifest
                           JarEntry
@@ -113,31 +111,6 @@
            [:servlet-mapping
             [:servlet-name (servlet-name project)]
             [:url-pattern (url-pattern project)]]])))))
-
-(defn source-file [project namespace]
-  (io/file (:compile-path project)
-           (-> (str namespace)
-               (string/replace "-" "_")
-               (string/replace "." java.io.File/separator)
-               (str ".clj"))))
-
-(defn compile-form [project namespace form]
-  ;; We need to ensure that deps has already run before
-  ;; we write anything to :target-dir, which is otherwise
-  ;; cleaned by deps if it runs for the first time as a
-  ;; side effect of eval-in-project
-  ;; Ideally, generated sources would be going into a
-  ;; dedicated directory and thus be immune from the lifecycle
-  ;; around :target-dir; that would be straightforward using
-  ;; lein 2.x middlewares, but not so easy with 1.x.
-  (leiningen.deps/deps project)
-  (let [out-file (source-file project namespace)]
-    (.mkdirs (.getParentFile out-file))
-    (with-open [out (io/writer out-file)]
-      (binding [*out* out] (prn form))))
-  (eval-in-project project
-    `(do (clojure.core/compile '~namespace) nil)
-    nil))
 
 (defn generate-handler [project handler-sym]
   (if (get-in project [:ring :servlet-path-info?] true)
