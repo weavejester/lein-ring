@@ -1,7 +1,7 @@
 (ns leiningen.ring.server
   (:require [leinjacker.deps :as deps])
   (:use [leinjacker.eval :only (eval-in-project)]
-        leiningen.ring.util))
+        [leiningen.ring.util :only (ensure-handler-set! update-project)]))
 
 (defn load-namespaces
   "Create require forms for each of the supplied symbols. This exists because
@@ -14,7 +14,7 @@
              s))))
 
 (defn add-server-dep [project]
-  (deps/add-if-missing project '[ring-server "0.2.5"]))
+  (update-project project deps/add-if-missing '[ring-server "0.2.5"]))
 
 (defn server-task
   "Shared logic for server and server-headless tasks."

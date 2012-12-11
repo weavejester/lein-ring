@@ -38,3 +38,10 @@
   (eval-in-project project
     `(do (clojure.core/compile '~namespace) nil)
     nil))
+
+(defn update-project
+  "Update the project map using a function."
+  [project func & args]
+  (vary-meta
+   (apply func project args)
+   update-in [:without-profiles] #(apply func % args)))
