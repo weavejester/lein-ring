@@ -13,14 +13,17 @@
       (default-main-namespace project)))
 
 (defn compile-main [project]
-  (let [main-ns (symbol (main-namespace project))]
+  (let [main-ns (symbol (main-namespace project))
+        options (-> (select-keys project [:ring])
+                    (assoc-in [:ring :open-browser?] false)
+                    (assoc-in [:ring :stacktraces?] false)
+                    (assoc-in [:ring :auto-reload?] false))]
     (compile-form project main-ns
       `(do (ns ~main-ns
              (:require ring.server.leiningen)
              (:gen-class))
            (defn ~'-main []
-             (ring.server.leiningen/serve
-              '~(select-keys project [:ring])))))))
+             (ring.server.leiningen/serve '~options))))))
 
 (defn add-main-class [project]
   (update-project project assoc :main (symbol (main-namespace project))))
