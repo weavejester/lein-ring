@@ -1,8 +1,8 @@
 (ns leiningen.ring.jar
-  (:require [leiningen.jar :as jar]
-            [clojure.string :as str])
   (:use [leiningen.ring.util :only (compile-form ensure-handler-set!)]
-        [leiningen.ring.server :only (add-server-dep)]))
+        [leiningen.ring.server :only (add-server-dep)])
+  (:require [clojure.string :as str]
+            leiningen.jar))
 
 (defn default-main-namespace [project]
   (let [handler-sym (get-in project [:ring :handler])]
@@ -34,4 +34,4 @@
   (ensure-handler-set! project)
   (let [project (-> project add-server-dep add-main-class)]
     (compile-main project)
-    (jar/jar project)))
+    (leiningen.jar/jar project)))
