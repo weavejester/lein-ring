@@ -13,13 +13,16 @@
              (symbol ns)
              s))))
 
+(defn add-server-dep [project]
+  (deps/add-if-missing project '[ring-server "0.2.5"]))
+
 (defn server-task
   "Shared logic for server and server-headless tasks."
   [project options]
   (ensure-handler-set! project)
   (let [project (update-in project [:ring] merge options)]
     (eval-in-project
-     (deps/add-if-missing project '[ring-server "0.2.5"])
+     (add-server-dep project)
      `(ring.server.leiningen/serve
        '~(select-keys project [:ring]))
      (load-namespaces
