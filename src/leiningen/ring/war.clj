@@ -2,7 +2,8 @@
   (:require leiningen.deps
             [leiningen.compile :as compile]
             [clojure.java.io :as io]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [leinjacker.deps :as deps])
   (:use [leinjacker.eval :only (eval-in-project)]
         [clojure.data.xml :only [sexp-as-element indent-str]]
         leiningen.ring.util)
@@ -222,8 +223,7 @@
     war-stream))
 
 (defn add-servlet-dep [project]
-  (update-in project [:dependencies]
-             conj ['ring/ring-servlet "1.1.0"]))
+  (deps/add-if-missing project '[ring/ring-servlet "1.1.6"]))
 
 (defn war
   "Create a $PROJECT-$VERSION.war file."
