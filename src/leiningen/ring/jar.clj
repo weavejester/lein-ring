@@ -1,7 +1,8 @@
 (ns leiningen.ring.jar
-  (:use [leiningen.ring.util :refer (compile-form ensure-handler-set!)])
   (:require [leiningen.jar :as jar]
-            [leiningen.ring.server :as server]))
+            [clojure.string :as str])
+  (:use [leiningen.ring.util :only (compile-form ensure-handler-set!)]
+        [leiningen.ring.server :only (add-server-dep)]))
 
 (defn default-main-namespace [project]
   (let [handler-sym (get-in project [:ring :handler])]
@@ -21,8 +22,16 @@
              (ring.server.leiningen/serve
               '~(select-keys project [:ring])))))))
 
+(defn update-project [project func & args]
+  (vary-meta
+   (apply func project args)
+   update-in [:without-profiles] #(apply func % args)))
+
+(defn add-main-class [project]
+  (update-project project assoc :main (symbol (main-namespace project))))
+
 (defn jar [project]
   (ensure-handler-set! project)
-  (let [project (server/add-server-dep project)]
+  (let [project (-> project add-server-dep add-main-class)]
     (compile-main project)
     (jar/jar project)))
