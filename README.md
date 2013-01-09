@@ -105,12 +105,24 @@ The following options affect the behavior of the web server started by
   If true, automatically refresh the browser when source or resource
   files are modified. Defaults to false.
 
+## Executable jar files
+
+Lein-Ring can generate executable jar files for deployment purposes:
+
+    lein ring uberjar
+
+This generates a jar file with all dependencies. You can then copy the
+file to your web server and execute it with:
+
+    java -jar <project>-<version>-standalone.jar
+
 
 ## War files
 
 ### Compiling
 
-This next command will generate a war file from your handler:
+Lein-Ring can generate war files that can be loaded onto legacy Java
+web services such as Apache Tomcat:
 
     lein ring war
 
