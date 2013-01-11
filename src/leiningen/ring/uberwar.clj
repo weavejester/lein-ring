@@ -2,7 +2,8 @@
   (:use leiningen.ring.util)
   (:require [leiningen.ring.war :as war]
             [leiningen.compile :as compile]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [leinjacker.utils :as lju]))
 
 (defn default-uberwar-name [project]
   (or (:uberjar-name project)
@@ -40,13 +41,21 @@
     (war/dir-entry war-stream project "" (war/war-resources-path project))
     (jar-entries war-stream project)))
 
+(defn unmerge-profiles [project]
+  (if-let [unmerge-fn (and (= 2 (lju/lein-generation))
+                           (lju/try-resolve 'leiningen.core.project/unmerge-profiles))]
+    (unmerge-fn project [:default])
+    project))
+
 (defn uberwar
   "Create a $PROJECT-$VERSION.war with dependencies."
   ([project]
      (uberwar project (default-uberwar-name project)))
   ([project war-name]
      (ensure-handler-set! project)
-     (let [project (war/add-servlet-dep project)
+     (let [project (-> project
+                       unmerge-profiles
+                       war/add-servlet-dep)
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))
          (let [war-path (war/war-file-path project war-name)]
