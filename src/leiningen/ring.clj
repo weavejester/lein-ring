@@ -12,11 +12,10 @@
 
 (defn ring
   "Manage a Ring-based application."
-  {:help-arglists '([server server-headless war uberwar])
-   :subtasks [#'server #'server-headless #'war #'uberwar]}
+  {:help-arglists '([server server-headless war uberwar jar uberjar])
+   :subtasks [#'server #'server-headless #'war #'uberwar #'jar #'uberjar]}
   ([project]
      (println (if (nary? #'help-for 2)
-                ;; lein2 help-for
                 (help-for project "ring")
                 (help-for "ring"))))
   ([project subtask & args]

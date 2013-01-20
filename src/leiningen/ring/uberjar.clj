@@ -4,7 +4,9 @@
   (:require [leiningen.ring.jar :as jar]
             leiningen.uberjar))
 
-(defn uberjar [project]
+(defn uberjar
+  "Create an executable $PROJECT-$VERSION.jar file with dependencies."
+  [project]
   (ensure-handler-set! project)
   (let [project (-> project add-server-dep jar/add-main-class)]
     (jar/compile-main project)

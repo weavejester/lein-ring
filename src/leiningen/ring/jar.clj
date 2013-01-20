@@ -28,7 +28,9 @@
 (defn add-main-class [project]
   (update-project project assoc :main (symbol (main-namespace project))))
 
-(defn jar [project]
+(defn jar
+  "Create an executable $PROJECT-$VERSION.jar file."
+  [project]
   (ensure-handler-set! project)
   (let [project (-> project add-server-dep add-main-class)]
     (compile-main project)
