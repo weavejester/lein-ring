@@ -14,7 +14,7 @@
              s))))
 
 (defn add-server-dep [project]
-  (update-project project deps/add-if-missing '[ring-server "0.2.6"]))
+  (update-project project deps/add-if-missing '[ring-server "0.2.7"]))
 
 (defn server-task
   "Shared logic for server and server-headless tasks."
