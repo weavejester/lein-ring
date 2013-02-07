@@ -1,7 +1,16 @@
 (ns leiningen.ring.server
-  (:require [leinjacker.deps :as deps])
+  (:require [leinjacker.deps :as deps]
+            [leiningen.core.classpath :as classpath]
+            [clojure.java.io :as io])
   (:use [leinjacker.eval :only (eval-in-project)]
         [leiningen.ring.util :only (ensure-handler-set! update-project)]))
+
+(defn classpath-dirs 
+  "list of all dirs on the leiningen classpath"
+  [project]
+  (filter
+   #(.isDirectory (io/file %))
+   (classpath/get-classpath project)))
 
 (defn load-namespaces
   "Create require forms for each of the supplied symbols. This exists because
@@ -13,14 +22,20 @@
              (symbol ns)
              s))))
 
+(defn reload-paths [project]
+  (or (get-in project [:ring :reload-paths])
+      (classpath-dirs project)))
+
 (defn add-server-dep [project]
-  (update-project project deps/add-if-missing '[ring-server "0.2.7"]))
+  (update-project project deps/add-if-missing '[ring-server "0.2.8"]))
 
 (defn server-task
   "Shared logic for server and server-headless tasks."
   [project options]
   (ensure-handler-set! project)
-  (let [project (update-in project [:ring] merge options)]
+  (let [project (-> project
+                    (assoc-in [:ring :reload-paths] (reload-paths project))
+                    (update-in [:ring] merge options))]
     (eval-in-project
      (add-server-dep project)
      `(ring.server.leiningen/serve
