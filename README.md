@@ -101,6 +101,10 @@ The following options affect the behavior of the web server started by
   If true, automatically reload modified source files. Defaults to
   true in development mode, false in production.
 
+* `:reload-paths` -
+  A collection of directory paths that can trigger a reload. By
+  default this takes all directories in the project classpath.
+
 * `:auto-refresh?` -
   If true, automatically refresh the browser when source or resource
   files are modified. Defaults to false.
