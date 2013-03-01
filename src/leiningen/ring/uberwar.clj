@@ -3,7 +3,8 @@
   (:require [leiningen.ring.war :as war]
             [leiningen.compile :as compile]
             [clojure.java.io :as io]
-            [leinjacker.utils :as lju]))
+            [leinjacker.utils :as lju])
+  (:import [java.util.jar JarFile JarEntry]))
 
 (defn default-uberwar-name [project]
   (or (:uberjar-name project)
@@ -14,13 +15,19 @@
     (get-cp project)
     (->> (:library-path project) io/file .listFiles (map str))))
 
+(defn contains-entry? [^java.io.File file ^String entry]
+  (with-open [jar-file (JarFile. file)]
+    (some (partial = entry)
+          (map #(.getName ^JarEntry %)
+               (enumeration-seq (.entries jar-file))))))
+
 (defn jar-dependencies [project]
   (for [pathname (get-classpath project)
         :let [file (io/file pathname)
               fname (.getName file)]
         :when (and (.endsWith fname ".jar")
                    ;; Servlet container will have it's own servlet-api impl
-                   (not (.startsWith fname "servlet-api-")))]
+                   (not (contains-entry? file "javax/servlet/Servlet.class")))]
     file))
 
 (defn jar-entries [war project]
