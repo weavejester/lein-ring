@@ -27,7 +27,7 @@
       (classpath-dirs project)))
 
 (defn add-server-dep [project]
-  (update-project project deps/add-if-missing '[ring-server "0.2.8"]))
+  (update-project project deps/add-if-missing '[ring-server/ring-server "0.2.8"]))
 
 (defn server-task
   "Shared logic for server and server-headless tasks."
