@@ -109,6 +109,13 @@ The following options affect the behavior of the web server started by
   If true, automatically refresh the browser when source or resource
   files are modified. Defaults to false.
 
+* `:start-repl?` - 
+  If true, starts an nREPL server in the same process as the web server. 
+  Defaults to false.
+
+* `:repl-port` - 
+  The port to start the nREPL server on. Defaults to an arbitrary free port.
+
 ## Executable jar files
 
 Lein-Ring can generate executable jar files for deployment purposes:
