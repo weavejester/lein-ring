@@ -1,6 +1,7 @@
 (ns leiningen.ring.server
   (:require [leinjacker.deps :as deps]
             [leiningen.core.classpath :as classpath]
+            [clojure.tools.nrepl.server :as nrepl]
             [clojure.java.io :as io])
   (:use [leinjacker.eval :only (eval-in-project)]
         [leiningen.ring.util :only (ensure-handler-set! update-project)]))
@@ -26,8 +27,16 @@
   (or (get-in project [:ring :reload-paths])
       (classpath-dirs project)))
 
+(defn add-dep [project dep]
+  (update-project project deps/add-if-missing dep))
+
 (defn add-server-dep [project]
-  (update-project project deps/add-if-missing '[ring-server/ring-server "0.2.8"]))
+  (add-dep project '[ring-server/ring-server "0.2.8"]))
+
+(defn add-nrepl-dep [project start-repl?]
+  (if start-repl?
+    (add-dep project '[org.clojure/tools.nrepl "0.2.2"])
+    project))
 
 (defn server-task
   "Shared logic for server and server-headless tasks."
@@ -35,13 +44,21 @@
   (ensure-handler-set! project)
   (let [project (-> project
                     (assoc-in [:ring :reload-paths] (reload-paths project))
-                    (update-in [:ring] merge options))]
+                    (update-in [:ring] merge options))
+        {nrepl-port :port
+         start-nrepl? :start?
+         :or {nrepl-port 0}} (get-in project [:ring :nrepl])]
     (eval-in-project
-     (add-server-dep project)
-     `(ring.server.leiningen/serve
-       '~(select-keys project [:ring]))
+     (-> project add-server-dep (add-nrepl-dep start-nrepl?))
+     `(do
+        ~(when start-nrepl?
+           `(let [{actual-port# :port} (nrepl/start-server :port ~nrepl-port)]
+              (println "Started nREPL server on port" actual-port#)))
+        (ring.server.leiningen/serve
+         '~(select-keys project [:ring])))
      (load-namespaces
       'ring.server.leiningen
+      (when start-nrepl? 'clojure.tools.nrepl.server)
       (-> project :ring :handler)
       (-> project :ring :init)
       (-> project :ring :destroy)))))
