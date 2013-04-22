@@ -180,8 +180,9 @@
     (let [war-path (in-war-path war-root dir-path file)]
       (file-entry war project war-path file))))
 
-(defn war-resources-path [project]
-  (:war-resources-path project "war-resources"))
+(defn war-resources-paths [project]
+  (filter identity
+    (distinct (concat [(:war-resources-path project "war-resources")] (:war-resource-paths project)))))
 
 (defn write-war [project war-path]
   (with-open [war-stream (create-war project war-path)]
@@ -192,7 +193,8 @@
                                    [(:resources-path project)] (:resource-paths project)))
             :when path]
       (dir-entry war-stream project "WEB-INF/classes/" path))
-    (dir-entry war-stream project "" (war-resources-path project))
+    (doseq [path (war-resources-paths project)]
+      (dir-entry war-stream project "" path))
     war-stream))
 
 (defn add-servlet-dep [project]
