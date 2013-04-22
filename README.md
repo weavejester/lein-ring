@@ -85,6 +85,9 @@ it doesn't open a web browser:
 
     lein ring server-headless 4000
 
+N.B. `lein ring server` opens an icon in the OS X dock titled "clojure.main", 
+whereas `lein ring server-headless` does not. This is because it uses 
+[`clojure.java.browse/browse-url`](http://clojuredocs.org/clojure_core/clojure.java.browse/browse-url).
 
 ## Web server options
 
