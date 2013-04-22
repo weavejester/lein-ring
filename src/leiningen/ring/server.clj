@@ -1,7 +1,6 @@
 (ns leiningen.ring.server
   (:require [leinjacker.deps :as deps]
             [leiningen.core.classpath :as classpath]
-            [clojure.tools.nrepl.server :as nrepl]
             [clojure.java.io :as io])
   (:use [leinjacker.eval :only (eval-in-project)]
         [leiningen.ring.util :only (ensure-handler-set! update-project)]))
@@ -33,10 +32,21 @@
 (defn add-server-dep [project]
   (add-dep project '[ring-server/ring-server "0.2.8"]))
 
-(defn add-nrepl-dep [project start-repl?]
-  (if start-repl?
+(defn start-server-expr [project]
+  `(ring.server.leiningen/serve '~(select-keys project [:ring])))
+
+(defn nrepl? [project]
+  (-> project :ring :nrepl :start?))
+
+(defn add-optional-nrepl-dep [project]
+  (if (nrepl? project)
     (add-dep project '[org.clojure/tools.nrepl "0.2.2"])
     project))
+
+(defn start-nrepl-expr [project]
+  (let [port (-> project :ring :nrepl (:port 0))]
+    `(let [{port# :port} (clojure.tools.nrepl.server/start-server :port ~port)]
+       (println "Started nREPL server on port" port#))))
 
 (defn server-task
   "Shared logic for server and server-headless tasks."
@@ -44,21 +54,15 @@
   (ensure-handler-set! project)
   (let [project (-> project
                     (assoc-in [:ring :reload-paths] (reload-paths project))
-                    (update-in [:ring] merge options))
-        {nrepl-port :port
-         start-nrepl? :start?
-         :or {nrepl-port 0}} (get-in project [:ring :nrepl])]
+                    (update-in [:ring] merge options))]
     (eval-in-project
-     (-> project add-server-dep (add-nrepl-dep start-nrepl?))
-     `(do
-        ~(when start-nrepl?
-           `(let [{actual-port# :port} (nrepl/start-server :port ~nrepl-port)]
-              (println "Started nREPL server on port" actual-port#)))
-        (ring.server.leiningen/serve
-         '~(select-keys project [:ring])))
+     (-> project add-server-dep add-optional-nrepl-dep)
+     (if (nrepl? project)
+       `(do ~(start-nrepl-expr project) ~(start-server-expr project))
+       (start-server-expr project))
      (load-namespaces
       'ring.server.leiningen
-      (when start-nrepl? 'clojure.tools.nrepl.server)
+      (if (nrepl? project) 'clojure.tools.nrepl.server)
       (-> project :ring :handler)
       (-> project :ring :init)
       (-> project :ring :destroy)))))
