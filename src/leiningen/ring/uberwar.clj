@@ -38,7 +38,8 @@
                                    [(:resources-path project)] (:resource-paths project)))
             :when path]
       (war/dir-entry war-stream project "WEB-INF/classes/" path))
-    (war/dir-entry war-stream project "" (war/war-resources-path project))
+    (doseq [path (war/war-resources-paths project)]
+      (war/dir-entry war-stream project "" path))
     (jar-entries war-stream project)))
 
 (defn unmerge-profiles [project]
