@@ -5,12 +5,19 @@
   (:use [leinjacker.eval :only (eval-in-project)]
         [leiningen.ring.util :only (ensure-handler-set! update-project)]))
 
+(defn ends-with-none-of [s strs]
+  (every? #(not (.endsWith s %)) strs))
+
+(defonce excluded-cp-paths 
+  (map #(str java.io.File/separator %) ["test" "classes"]))
+
 (defn classpath-dirs 
   "list of all dirs on the leiningen classpath"
   [project]
-  (filter
-   #(.isDirectory (io/file %))
-   (classpath/get-classpath project)))
+  (filter #(and 
+             (.isDirectory (io/file %))
+             (ends-with-none-of % excluded-cp-paths)) 
+          (classpath/get-classpath project)))
 
 (defn load-namespaces
   "Create require forms for each of the supplied symbols. This exists because
