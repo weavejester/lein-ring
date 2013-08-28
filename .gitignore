@@ -5,3 +5,4 @@ lib
 classes
 /target
 /.lein-deps-sum
+/.lein-failures
