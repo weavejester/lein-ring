@@ -199,7 +199,7 @@
     war-stream))
 
 (defn add-servlet-dep [project]
-  (deps/add-if-missing project '[ring/ring-servlet "1.1.6"]))
+  (deps/add-if-missing project '[ring/ring-servlet "1.2.0"]))
 
 (defn war
   "Create a $PROJECT-$VERSION.war file."
