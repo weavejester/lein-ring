@@ -4,4 +4,4 @@ pom.xml.asc
 lib
 classes
 /target
-/.lein-deps-sum
+/.lein-*
