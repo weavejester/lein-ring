@@ -138,7 +138,8 @@
         destroy-sym (get-in project [:ring :destroy])
         init-ns     (and init-sym    (symbol (namespace init-sym)))
         destroy-ns  (and destroy-sym (symbol (namespace destroy-sym)))
-        project-ns  (symbol (listener-ns project))]
+        project-ns  (symbol (listener-ns project))
+        listeners-with-ctx (get-in project [:ring :listeners-with-ctx])]
     (compile-form project project-ns
       `(do (ns ~project-ns
              (:require ~@(set (remove nil? [init-ns destroy-ns])))
@@ -147,10 +148,14 @@
               `(do
                  (defn ~'-contextInitialized [this# ~servlet-context-event]
                    ~(if init-sym
-                      `(~init-sym)))
+                      (if-not listeners-with-ctx
+                        `(~init-sym)
+                        `(~init-sym (.getServletContext ~servlet-context-event)))))
                  (defn ~'-contextDestroyed [this# ~servlet-context-event]
                    ~(if destroy-sym
-                      `(~destroy-sym)))))))))
+                      (if-not listeners-with-ctx
+                        `(~destroy-sym)
+                        `(~destroy-sym (.getServletContext ~servlet-context-event)))))))))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
