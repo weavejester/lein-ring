@@ -40,7 +40,7 @@
 
 (defn add-optional-nrepl-dep [project]
   (if (nrepl? project)
-    (add-dep project '[org.clojure/tools.nrepl "0.2.2"])
+    (add-dep project '[org.clojure/tools.nrepl "0.2.3"])
     project))
 
 (defn start-nrepl-expr [project]
