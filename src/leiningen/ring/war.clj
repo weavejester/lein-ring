@@ -214,7 +214,6 @@
      (war project (default-war-name project)))
   ([project war-name]
      (ensure-handler-set! project)
-;     (let [project (add-servlet-dep project)
       (let [project (-> project
                         add-servlet-dep
                         unmerge-profiles)
