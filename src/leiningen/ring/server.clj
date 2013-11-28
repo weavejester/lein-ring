@@ -46,6 +46,10 @@
 (defn start-nrepl-expr [project]
   (let [port (-> project :ring :nrepl (:port 0))]
     `(let [{port# :port} (clojure.tools.nrepl.server/start-server :port ~port)]
+       (-> "target/repl-port"
+           java.io.File.
+           (#(do (.deleteOnExit %) %))
+           (spit port#))
        (println "Started nREPL server on port" port#))))
 
 (defn server-task
