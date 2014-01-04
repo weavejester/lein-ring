@@ -217,8 +217,8 @@
   ([project war-name]
      (ensure-handler-set! project)
       (let [project (-> project
-                        add-servlet-dep
-                        unmerge-profiles)
+                        unmerge-profiles
+                        add-servlet-dep)
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))
          (let [war-path (war-file-path project war-name)]
