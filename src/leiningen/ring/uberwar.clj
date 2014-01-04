@@ -56,9 +56,6 @@
     (unmerge-fn project [:default])
     project))
 
-(defn- add-servlet-dep [project]
-  (update-project project deps/add-if-missing '[javax.servlet/servlet-api "2.5"]))
-
 (defn uberwar
   "Create a $PROJECT-$VERSION.war with dependencies."
   ([project]
@@ -66,7 +63,6 @@
   ([project war-name]
      (ensure-handler-set! project)
      (let [project (-> project
-                       add-servlet-dep
                        unmerge-profiles
                        war/add-servlet-dep)
            result  (compile/compile project)]

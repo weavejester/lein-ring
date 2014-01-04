@@ -206,7 +206,9 @@
     project))
         
 (defn add-servlet-dep [project]
-  (deps/add-if-missing project '[ring/ring-servlet "1.2.1"]))
+  (-> project
+      (deps/add-if-missing '[ring/ring-servlet "1.2.1"])
+      (deps/add-if-missing '[javax.servlet/servlet-api "2.5"])))
 
 (defn war
   "Create a $PROJECT-$VERSION.war file."
