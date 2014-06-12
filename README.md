@@ -173,6 +173,11 @@ The following war-specific options are supported:
 * `:web-xml` -
   web.xml file to use in place of auto-generated version (relative to project root).
 
+* `:servlet-version` -
+  The version of the servlet spec that we claim to conform
+  to. Attributes corresponding to this version will be added to the
+  web-app element of the web.xml. If not specified, defaults to 2.5.
+
 These keys should be placed under the `:ring` key in `project.clj`,
 and are optional values. If not supplied, default values will be used instead.
 

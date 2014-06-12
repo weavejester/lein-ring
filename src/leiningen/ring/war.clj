@@ -96,6 +96,26 @@
   (or (get-in project [:ring :url-pattern])
       "/*"))
 
+(def web-app-attrs
+  "Attributes for the web-app element, indexed by the servlet version."
+  {"2.4" {:xmlns     "http://java.sun.com/xml/ns/j2ee"
+          :xmlns:xsi "http://www.w3.org/2001/XMLSchema-instance"
+          :xsi:schemaLocation (str "http://java.sun.com/xml/ns/j2ee "
+                                   "http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd")
+          :version "2.4"}
+   "2.5" {:xmlns     "http://java.sun.com/xml/ns/javaee"
+          :xmlns:xsi "http://www.w3.org/2001/XMLSchema-instance"
+          :xsi:schemaLocation (str "http://java.sun.com/xml/ns/javaee "
+                                   "http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd")
+          :version "2.5"}
+   "3.0" {:xmlns     "http://java.sun.com/xml/ns/javaee"
+          :xmlns:xsi "http://www.w3.org/2001/XMLSchema-instance"
+          :xsi:schemaLocation (str "http://java.sun.com/xml/ns/javaee "
+                                   "http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd")
+          :version "3.0"}})
+
+(def default-servlet-version "2.5")
+
 (defn make-web-xml [project]
   (let [ring-options (:ring project)]
     (if (contains? ring-options :web-xml)
@@ -103,6 +123,9 @@
       (indent-str
         (sexp-as-element
           [:web-app
+           (get web-app-attrs
+                (get-in project [:ring :servlet-version] default-servlet-version)
+                {})
            (if (has-listener? project)
              [:listener
               [:listener-class (listener-class project)]])
