@@ -8,7 +8,8 @@
   (:import [java.util.jar JarFile JarEntry]))
 
 (defn default-uberwar-name [project]
-  (or (:uberjar-name project)
+  (or (get-in project [:ring :uberwar-name])
+      (:uberjar-name project)
       (str (:name project) "-" (:version project) "-standalone.war")))
 
 (defn get-classpath [project]
