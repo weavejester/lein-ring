@@ -45,3 +45,13 @@
   (vary-meta
    (apply func project args)
    update-in [:without-profiles] #(apply func % args)))
+
+(defn source-and-resource-paths
+  "Return a distinct sequence of the project's source and resource paths,
+  unless :omit-source is true, in which case return only resource paths."
+  [project]
+  (let [resource-paths (concat [(:resources-path project)] (:resource-paths project))
+        source-paths (if (:omit-source project)
+                       '()
+                       (concat [(:source-path project)] (:source-paths project)))]
+    (distinct (concat source-paths resource-paths))))
