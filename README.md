@@ -7,7 +7,7 @@ It provides commands to start a development web server, and to turn a
 Ring handler into a standard war file.
 
 [1]: https://github.com/technomancy/leiningen
-[2]: https://github.com/mmcgrana/ring 
+[2]: https://github.com/ring-clojure/ring
 
 
 ## Install
