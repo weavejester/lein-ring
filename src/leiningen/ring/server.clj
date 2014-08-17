@@ -5,7 +5,7 @@
   (:use [leinjacker.eval :only (eval-in-project)]
         [leiningen.ring.util :only (ensure-handler-set! update-project)]))
 
-(defn classpath-dirs 
+(defn classpath-dirs
   "list of all dirs on the leiningen classpath"
   [project]
   (filter
@@ -40,12 +40,15 @@
 
 (defn add-optional-nrepl-dep [project]
   (if (nrepl? project)
-    (add-dep project '[org.clojure/tools.nrepl "0.2.3"])
+    (-> project
+        (add-dep '[org.clojure/tools.nrepl "0.2.3"])
+        (add-dep '[cider/cider-nrepl "0.8.0-snapshot"]))
     project))
 
 (defn start-nrepl-expr [project]
   (let [port (-> project :ring :nrepl (:port 0))]
-    `(let [{port# :port} (clojure.tools.nrepl.server/start-server :port ~port)]
+    `(let [{port# :port} (clojure.tools.nrepl.server/start-server
+                          :port ~port :handler cider.nrepl/cider-nrepl-handler)]
        (doseq [port-file# ["target/repl-port" ".nrepl-port"]]
          (-> port-file#
              java.io.File.
@@ -68,6 +71,7 @@
      (load-namespaces
       'ring.server.leiningen
       (if (nrepl? project) 'clojure.tools.nrepl.server)
+      (if (nrepl? project) 'cider.nrepl)
       (-> project :ring :handler)
       (-> project :ring :init)
       (-> project :ring :destroy)))))
