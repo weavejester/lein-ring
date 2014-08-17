@@ -38,17 +38,26 @@
 (defn nrepl? [project]
   (-> project :ring :nrepl :start?))
 
+(defn cider? [project]
+  (= :cider (-> project :ring :nrepl :handler)))
+
 (defn add-optional-nrepl-dep [project]
   (if (nrepl? project)
-    (-> project
-        (add-dep '[org.clojure/tools.nrepl "0.2.3"])
-        (add-dep '[cider/cider-nrepl "0.8.0-snapshot"]))
+    (add-dep project '[org.clojure/tools.nrepl "0.2.3"])
+    project))
+
+(defn add-optional-cider-dep [project]
+  (if (cider? project)
+    (add-dep project '[cider/cider-nrepl "0.8.0-snapshot"])
     project))
 
 (defn start-nrepl-expr [project]
-  (let [port (-> project :ring :nrepl (:port 0))]
+  (let [port (-> project :ring :nrepl (:port 0))
+        handler (if (cider? project)
+                  #'cider.nrepl/cider-nrepl-handler
+                  #'clojure.tools.nrepl.server/default-handler)]
     `(let [{port# :port} (clojure.tools.nrepl.server/start-server
-                          :port ~port :handler cider.nrepl/cider-nrepl-handler)]
+                          :port ~port :handler ~handler)]
        (doseq [port-file# ["target/repl-port" ".nrepl-port"]]
          (-> port-file#
              java.io.File.
@@ -64,14 +73,17 @@
                     (assoc-in [:ring :reload-paths] (reload-paths project))
                     (update-in [:ring] merge options))]
     (eval-in-project
-     (-> project add-server-dep add-optional-nrepl-dep)
+     (-> project
+         add-server-dep
+         add-optional-nrepl-dep
+         add-optional-cider-dep)
      (if (nrepl? project)
        `(do ~(start-nrepl-expr project) ~(start-server-expr project))
        (start-server-expr project))
      (load-namespaces
       'ring.server.leiningen
       (if (nrepl? project) 'clojure.tools.nrepl.server)
-      (if (nrepl? project) 'cider.nrepl)
+      (if (cider? project) 'cider.nrepl)
       (-> project :ring :handler)
       (-> project :ring :init)
       (-> project :ring :destroy)))))

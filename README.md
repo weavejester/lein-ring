@@ -109,10 +109,11 @@ The following options affect the behavior of the web server started by
   If true, automatically refresh the browser when source or resource
   files are modified. Defaults to false.
 
-* `:nrepl` - 
-  A map of `:start?` and (optionally) `:port` keys. If `:start?` is true, 
-  open up an nREPL server on the given port. `:start?` defaults to false, 
-  `:port` defaults to an arbitrary free port.
+* `:nrepl` -
+  A map of `:start?`, (optionally) `:port` and `:handler` keys.
+  If `:start?` is true, open up an nREPL server on the given port.
+  `:start?` defaults to false, `:port` defaults to an arbitrary free port,
+  `:handler` could be either :nrepl or :cider, defauts to :nrepl.
 
 ## Executable jar files
 
