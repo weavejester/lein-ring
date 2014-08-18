@@ -28,6 +28,11 @@
 (defn add-main-class [project]
   (update-project project assoc :main (symbol (main-namespace project))))
 
+(defn verify-main-in-aot [project]
+  (if-not (or (get-in project [:aot]) (get-in project [:profiles :uberjar :aot]))
+    (update-project project assoc :aot [(symbol (main-namespace project))])
+    project))
+
 (defn jar
   "Create an executable $PROJECT-$VERSION.jar file."
   [project]
