@@ -44,8 +44,10 @@
     project))
 
 (defn start-nrepl-expr [project]
-  (let [port (-> project :ring :nrepl (:port 0))]
-    `(let [{port# :port} (clojure.tools.nrepl.server/start-server :port ~port)]
+  (let [port (-> project :ring :nrepl (:port 0))
+        middlewares (map (fn [m] `#'~m) (-> project :ring :nrepl (:middlewares [])))]
+    `(let [{port# :port} (clojure.tools.nrepl.server/start-server :port ~port
+                                                                  :handler (clojure.tools.nrepl.server/default-handler ~@middlewares))]
        (doseq [port-file# ["target/repl-port" ".nrepl-port"]]
          (-> port-file#
              java.io.File.
