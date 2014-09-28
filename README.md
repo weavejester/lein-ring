@@ -17,10 +17,6 @@ your global profile:
 
     :plugins [[lein-ring "0.8.11"]]
 
-Or, if you are using a version of Leiningen prior to 1.7.0:
-
-    :dev-dependencies [[lein-ring "0.8.11"]]
-
 Then add a new `:ring` key to your `project.clj` file that contains a
 map of configuration options. At minimum there must be a `:handler`
 key that references your Ring handler:
