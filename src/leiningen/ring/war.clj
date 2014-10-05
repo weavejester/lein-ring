@@ -9,8 +9,8 @@
   (:import [java.util.jar Manifest
                           JarEntry
                           JarOutputStream]
-           [java.io BufferedOutputStream 
-                    FileOutputStream 
+           [java.io BufferedOutputStream
+                    FileOutputStream
                     ByteArrayInputStream]))
 
 (defn default-war-name [project]
@@ -143,7 +143,7 @@
          (~handler-sym
           (assoc request#
             :context context#
-            :path-info (subs (:uri request#) (.length context#))))))
+            :path-info (-> (:uri request#) (subs (.length context#)) not-empty (or "/"))))))
     handler-sym))
 
 (defn compile-servlet [project]
@@ -226,7 +226,7 @@
                            (lju/try-resolve 'leiningen.core.project/unmerge-profiles))]
     (unmerge-fn project [:default])
     project))
-        
+
 (defn add-servlet-dep [project]
   (-> project
       (deps/add-if-missing '[ring/ring-servlet "1.2.1"])
