@@ -3,7 +3,7 @@
         [leiningen.ring.server :only (add-server-dep)])
   (:require [leiningen.ring.jar :as jar]
             [leiningen.clean :as clean]
-            leiningen.uberjar))
+            [leiningen.uberjar]))
 
 (defn- no-uberjar-clean [project]
   "Modifies the uberjar profile so that no auto-clean is performed
@@ -17,6 +17,7 @@
   (ensure-handler-set! project)
   (when (:auto-clean project true)
     (clean/clean project))
-  (let [project (-> project add-server-dep jar/add-main-class no-uberjar-clean)]
-    (jar/compile-main project)
+  (let [project (-> project add-server-dep ;; jar/add-main-class
+                    no-uberjar-clean)]
+    ;; (jar/compile-main project)
     (leiningen.uberjar/uberjar project)))

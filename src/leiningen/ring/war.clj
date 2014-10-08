@@ -1,17 +1,17 @@
 (ns leiningen.ring.war
   (:require [leiningen.compile :as compile]
+            [clojure.data.xml :refer [sexp-as-element indent-str]]
+            [leiningen.ring.util :refer :all]
             [clojure.java.io :as io]
             [clojure.string :as string]
             [leinjacker.utils :as lju]
             [leinjacker.deps :as deps])
-  (:use [clojure.data.xml :only [sexp-as-element indent-str]]
-        leiningen.ring.util)
-  (:import [java.util.jar Manifest
+  (:import (java.util.jar Manifest
                           JarEntry
-                          JarOutputStream]
-           [java.io BufferedOutputStream 
-                    FileOutputStream 
-                    ByteArrayInputStream]))
+                          JarOutputStream)
+           (java.io BufferedOutputStream 
+                    FileOutputStream
+                    ByteArrayInputStream)))
 
 (defn default-war-name [project]
   (or (get-in project [:ring :war-name])
@@ -117,24 +117,41 @@
 (def default-servlet-version "2.5")
 
 (defn make-web-xml [project]
-  (let [ring-options (:ring project)]
+  (let [ring-options (:ring project)
+        handler-sym (get-in project [:ring :handler])
+        handler-ns  (name (namespace handler-sym))
+        handler-name (name handler-sym)
+        init-sym    (get-in project [:ring :init])
+        destroy-sym (get-in project [:ring :destroy])
+        init-ns     (name (namespace init-sym))
+        init-name     (name init-sym)]
     (if (contains? ring-options :web-xml)
       (slurp (:web-xml ring-options))
       (indent-str
-        (sexp-as-element
-          [:web-app
-           (get web-app-attrs
-                (get-in project [:ring :servlet-version] default-servlet-version)
-                {})
-           (if (has-listener? project)
-             [:listener
-              [:listener-class (listener-class project)]])
-           [:servlet
-            [:servlet-name  (servlet-name project)]
-            [:servlet-class (servlet-class project)]]
-           [:servlet-mapping
-            [:servlet-name (servlet-name project)]
-            [:url-pattern (url-pattern project)]]])))))
+       (sexp-as-element
+        [:web-app
+         ;; (if (has-listener? project)
+         ;;   [:listener
+         ;;    [:listener-class (listener-class project)]])
+         [:servlet
+          [:servlet-name (servlet-name project)]
+          [:servlet-class "lein.ring.Servlet"]
+          [:init-param
+           [:param-name "ns-name"]
+           [:param-value handler-ns]]
+          [:init-param
+           [:param-name "handler-name"]
+           [:param-value handler-name]]
+          [:init-param
+           [:param-name "init-ns-name"]
+           [:param-value init-ns]]
+          [:init-param
+           [:param-name "init-name"]
+           [:param-value init-name]]
+          [:load-on-startup 0]]
+         [:servlet-mapping
+          [:servlet-name (servlet-name project)]
+          [:url-pattern (url-pattern project)]]])))))
 
 (defn generate-handler [project handler-sym]
   (if (get-in project [:ring :servlet-path-info?] true)
@@ -207,7 +224,8 @@
 
 (defn war-resources-paths [project]
   (filter identity
-    (distinct (concat [(:war-resources-path project "war-resources")] (:war-resource-paths project)))))
+          (distinct (concat [(:war-resources-path project "war-resources")]
+                            (:war-resource-paths project)))))
 
 (defn write-war [project war-path]
   (with-open [war-stream (create-war project war-path)]
@@ -244,9 +262,9 @@
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))
          (let [war-path (war-file-path project war-name)]
-           (compile-servlet project)
-           (if (has-listener? project)
-             (compile-listener project))
+           ;; (compile-servlet project)
+           ;; (when (has-listener? project)
+           ;;   (compile-listener project))
            (write-war project war-path)
            (println "Created" war-path)
            war-path)))))

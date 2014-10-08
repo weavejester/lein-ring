@@ -32,6 +32,7 @@
   "Create an executable $PROJECT-$VERSION.jar file."
   [project]
   (ensure-handler-set! project)
-  (let [project (-> project add-server-dep add-main-class)]
-    (compile-main project)
+  (let [project (-> project add-server-dep ;; add-main-class
+                    )]
+    ;; (compile-main project)
     (leiningen.jar/jar project)))
