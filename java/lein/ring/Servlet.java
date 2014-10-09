@@ -31,19 +31,35 @@ public class Servlet extends GenericServlet {
     // TODO: destroy
 
     public Servlet() {;}
+
     public void init() throws ServletException {
         ServletConfig config = this.getServletConfig();
-        REQUIRE.invoke(SYMBOL.invoke(config.getInitParameter("ns-name")));
-        handler=(IFn) MAKE_SERVICE_METHOD.invoke(DEREF.invoke(RT.var(config.getInitParameter("ns-name"),
-                                                                     config.getInitParameter("handler-name"))));
 
-        REQUIRE.invoke(SYMBOL.invoke(config.getInitParameter("init-ns-name")));
-        RT.var(config.getInitParameter("init-ns-name"), 
-               config.getInitParameter("init-name")).invoke();
+        // Handler
+        require(config.getInitParameter("ns-name"));
+        handler = createServiceMethod(config.getInitParameter("ns-name"),
+                                      config.getInitParameter("handler-name"));
+
+        // Init
+        require(config.getInitParameter("init-ns-name"));
+        invoke(config.getInitParameter("init-ns-name"),
+               config.getInitParameter("init-name"));
     }
 
     public void service(ServletRequest request, ServletResponse response) {
         handler.invoke(this, request, response);
+    }
+
+    private void require(String namespace) {
+        REQUIRE.invoke(SYMBOL.invoke(namespace));
+    }
+
+    private IFn createServiceMethod(String namespace, String handler) {
+        return (IFn) MAKE_SERVICE_METHOD.invoke(DEREF.invoke(RT.var(namespace, handler)));
+    }
+
+    private void invoke(String namespace, String var) {
+        RT.var(namespace, var).invoke();
     }
 
 }
