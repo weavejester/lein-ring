@@ -17,7 +17,5 @@
   (ensure-handler-set! project)
   (when (:auto-clean project true)
     (clean/clean project))
-  (let [project (-> project add-server-dep ;; jar/add-main-class
-                    no-uberjar-clean)]
-    ;; (jar/compile-main project)
+  (let [project (-> project add-server-dep no-uberjar-clean)]
     (leiningen.uberjar/uberjar project)))
