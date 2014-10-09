@@ -130,9 +130,6 @@
       (indent-str
        (sexp-as-element
         [:web-app
-         ;; (if (has-listener? project)
-         ;;   [:listener
-         ;;    [:listener-class (listener-class project)]])
          [:servlet
           [:servlet-name (servlet-name project)]
           [:servlet-class "lein.ring.Servlet"]
@@ -162,36 +159,6 @@
             :context context#
             :path-info (subs (:uri request#) (.length context#))))))
     handler-sym))
-
-(defn compile-servlet [project]
-  (let [handler-sym (get-in project [:ring :handler])
-        handler-ns  (symbol (namespace handler-sym))
-        servlet-ns  (symbol (servlet-ns project))]
-    (compile-form project servlet-ns
-      `(do (ns ~servlet-ns
-             (:require ring.util.servlet ~handler-ns)
-             (:gen-class :extends javax.servlet.http.HttpServlet))
-           (ring.util.servlet/defservice
-             ~(generate-handler project handler-sym))))))
-
-(defn compile-listener [project]
-  (let [init-sym    (get-in project [:ring :init])
-        destroy-sym (get-in project [:ring :destroy])
-        init-ns     (and init-sym    (symbol (namespace init-sym)))
-        destroy-ns  (and destroy-sym (symbol (namespace destroy-sym)))
-        project-ns  (symbol (listener-ns project))]
-    (compile-form project project-ns
-      `(do (ns ~project-ns
-             (:require ~@(set (remove nil? [init-ns destroy-ns])))
-             (:gen-class :implements [javax.servlet.ServletContextListener]))
-           ~(let [servlet-context-event (gensym)]
-              `(do
-                 (defn ~'-contextInitialized [this# ~servlet-context-event]
-                   ~(if init-sym
-                      `(~init-sym)))
-                 (defn ~'-contextDestroyed [this# ~servlet-context-event]
-                   ~(if destroy-sym
-                      `(~destroy-sym)))))))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
@@ -262,9 +229,6 @@
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))
          (let [war-path (war-file-path project war-name)]
-           ;; (compile-servlet project)
-           ;; (when (has-listener? project)
-           ;;   (compile-listener project))
            (write-war project war-path)
            (println "Created" war-path)
            war-path)))))

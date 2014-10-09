@@ -77,9 +77,6 @@
                              io/resource
                              io/input-stream)]
              (io/copy s f))
-           ;; (war/compile-servlet project)
-           ;; (if (war/has-listener? project)
-           ;;   (war/compile-listener project))
            (write-uberwar project war-path)
            (println "Created" war-path)
            war-path)))))
