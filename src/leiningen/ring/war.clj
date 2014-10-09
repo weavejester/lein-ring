@@ -150,16 +150,6 @@
           [:servlet-name (servlet-name project)]
           [:url-pattern (url-pattern project)]]])))))
 
-(defn generate-handler [project handler-sym]
-  (if (get-in project [:ring :servlet-path-info?] true)
-    `(fn [request#]
-       (let [context# ^String (.getContextPath (:servlet-request request#))]
-         (~handler-sym
-          (assoc request#
-            :context context#
-            :path-info (subs (:uri request#) (.length context#))))))
-    handler-sym))
-
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
       (BufferedOutputStream.)
