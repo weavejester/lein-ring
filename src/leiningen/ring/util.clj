@@ -4,6 +4,11 @@
             [clojure.java.io :as io]
             leiningen.deps))
 
+(defn require-and-resolve [qual-sym]
+  `(do
+     (require (quote ~(symbol (namespace qual-sym))))
+     (resolve (quote ~qual-sym))))
+
 (defn ensure-handler-set!
   "Ensure the :handler option is set in the project map."
   [project]

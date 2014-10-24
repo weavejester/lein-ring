@@ -138,43 +138,59 @@
 
 (defn generate-handler [project handler-sym]
   (if (get-in project [:ring :servlet-path-info?] true)
-    `(fn [request#]
-       (let [context# ^String (.getContextPath (:servlet-request request#))]
-         (~handler-sym
-          (assoc request#
-            :context context#
-            :path-info (-> (:uri request#) (subs (.length context#)) not-empty (or "/"))))))
-    handler-sym))
+    `(let [handler# ~(require-and-resolve handler-sym)]
+       (fn [request#]
+         (let [context# ^String (.getContextPath (:servlet-request request#))]
+           (handler#
+            (assoc request#
+              :context context#
+              :path-info (-> (:uri request#) (subs (.length context#)) not-empty (or "/")))))))
+    (require-and-resolve handler-sym)))
+
+(defn write-service
+  "Returns code for a service method with an optional prefix suitable for
+  being used by genclass to compile a HttpServlet class.
+
+  Twin to ring.util.servlet/write-service, but called as a function to
+  generate code, rather than as a macro."
+  ([handler]
+   (write-service "-" handler))
+  ([prefix handler]
+   `(def ~(symbol (str prefix "service"))
+      (let [method# (atom nil)]
+        (fn [servlet# request# response#]
+          ((or
+             @method#
+             (reset! method#
+               (~(require-and-resolve
+                   `ring.util.servlet/make-service-method)
+                 ~handler)))
+           servlet# request# response#))))))
 
 (defn compile-servlet [project]
   (let [handler-sym (get-in project [:ring :handler])
-        handler-ns  (symbol (namespace handler-sym))
         servlet-ns  (symbol (servlet-ns project))]
     (compile-form project servlet-ns
       `(do (ns ~servlet-ns
-             (:require ring.util.servlet ~handler-ns)
              (:gen-class :extends javax.servlet.http.HttpServlet))
-           (ring.util.servlet/defservice
-             ~(generate-handler project handler-sym))))))
+           ~(write-service
+              (generate-handler project handler-sym))))))
 
 (defn compile-listener [project]
   (let [init-sym    (get-in project [:ring :init])
         destroy-sym (get-in project [:ring :destroy])
-        init-ns     (and init-sym    (symbol (namespace init-sym)))
-        destroy-ns  (and destroy-sym (symbol (namespace destroy-sym)))
         project-ns  (symbol (listener-ns project))]
     (compile-form project project-ns
       `(do (ns ~project-ns
-             (:require ~@(set (remove nil? [init-ns destroy-ns])))
              (:gen-class :implements [javax.servlet.ServletContextListener]))
            ~(let [servlet-context-event (gensym)]
               `(do
                  (defn ~'-contextInitialized [this# ~servlet-context-event]
                    ~(if init-sym
-                      `(~init-sym)))
+                      `(~(require-and-resolve init-sym))))
                  (defn ~'-contextDestroyed [this# ~servlet-context-event]
                    ~(if destroy-sym
-                      `(~destroy-sym)))))))))
+                      `(~(require-and-resolve destroy-sym))))))))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
