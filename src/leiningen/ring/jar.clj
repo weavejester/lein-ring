@@ -1,5 +1,6 @@
 (ns leiningen.ring.jar
-  (:use [leiningen.ring.util :only (compile-form ensure-handler-set! update-project)]
+  (:use [leiningen.ring.util :only (compile-form ensure-handler-set!
+                                    update-project require-and-resolve)]
         [leiningen.ring.server :only (add-server-dep)])
   (:require [clojure.string :as str]
             leiningen.jar))
@@ -20,10 +21,9 @@
                     (assoc-in [:ring :auto-reload?] false))]
     (compile-form project main-ns
       `(do (ns ~main-ns
-             (:require ring.server.leiningen)
              (:gen-class))
            (defn ~'-main []
-             (ring.server.leiningen/serve '~options))))))
+             (~(require-and-resolve 'ring.server.leiningen/serve) '~options))))))
 
 (defn add-main-class [project]
   (update-project project assoc :main (symbol (main-namespace project))))
