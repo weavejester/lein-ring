@@ -71,12 +71,20 @@
                f (io/file (:compile-path project)
                           "lein"
                           "ring"
-                          "Servlet.class")]
+                          "Servlet.class")
+               l (io/file (:compile-path project)
+                          "lein"
+                          "ring"
+                          "Listener.class")]
            (.mkdirs (.getParentFile f))
            (with-open [s (-> "lein/ring/Servlet.class"
                              io/resource
                              io/input-stream)]
              (io/copy s f))
+           (with-open [lw (-> "lein/ring/Listener.class"
+                              io/resource
+                              io/input-stream)]
+             (io/copy lw l))
            (write-uberwar project war-path)
            (println "Created" war-path)
            war-path)))))

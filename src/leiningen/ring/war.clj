@@ -124,12 +124,16 @@
         init-sym    (get-in project [:ring :init])
         destroy-sym (get-in project [:ring :destroy])
         init-ns     (name (namespace init-sym))
-        init-name     (name init-sym)]
+        init-name     (name init-sym)
+        destroy-ns  (name (namespace destroy-sym))
+        destroy-name (name destroy-sym)]
     (if (contains? ring-options :web-xml)
       (slurp (:web-xml ring-options))
       (indent-str
        (sexp-as-element
         [:web-app
+         [:listener
+          [:listener-class "lein.ring.Listener"] ]
          [:servlet
           [:servlet-name (servlet-name project)]
           [:servlet-class "lein.ring.Servlet"]
@@ -145,6 +149,12 @@
           [:init-param
            [:param-name "init-name"]
            [:param-value init-name]]
+          [:init-param
+           [:param-name "destroy-ns-name"]
+           [:param-value destroy-ns]]
+          [:init-param
+           [:param-name "destroy-name"]
+           [:param-value destroy-name]]
           [:load-on-startup 0]]
          [:servlet-mapping
           [:servlet-name (servlet-name project)]

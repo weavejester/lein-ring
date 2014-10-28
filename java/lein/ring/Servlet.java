@@ -5,6 +5,7 @@ import clojure.lang.IFn;
 import clojure.lang.Var;
 import clojure.lang.Symbol;
 
+import lein.ring.Listener;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -21,8 +22,6 @@ public class Servlet extends GenericServlet {
     public static IFn MAKE_SERVICE_METHOD =
         fn("ring.util.servlet", "make-service-method");
 
-    // TODO: destroy
-
     public Servlet() {;}
 
     public void init() throws ServletException {
@@ -35,6 +34,11 @@ public class Servlet extends GenericServlet {
         // Init
         invoke(config.getInitParameter("init-ns-name"),
                config.getInitParameter("init-name"));
+
+        // Set up destructor
+        Listener.setDestructor(
+            fn(config.getInitParameter("destroy-ns-name"),
+               config.getInitParameter("destroy-name")));
     }
 
     public static IFn fn(String ns, String fnName) {
