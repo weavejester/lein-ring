@@ -18,15 +18,8 @@ public class Servlet extends GenericServlet {
 
     public static Var REQUIRE = RT.var("clojure.core", "require");
     public static Var SYMBOL = RT.var("clojure.core", "symbol");
-    public static Var RESOLVE = RT.var("clojure.core", "resolve");
-    public static Var DEREF = RT.var("clojure.core", "deref");
-    public static Symbol SERVLET_NS =  Symbol.create("ring.util.servlet");
-    public static Var MAKE_SERVICE_METHOD =
-        RT.var("ring.util.servlet", "make-service-method");
-
-    static {
-        REQUIRE.invoke(SERVLET_NS);
-    }
+    public static IFn MAKE_SERVICE_METHOD =
+        fn("ring.util.servlet", "make-service-method");
 
     // TODO: destroy
 
@@ -36,30 +29,32 @@ public class Servlet extends GenericServlet {
         ServletConfig config = this.getServletConfig();
 
         // Handler
-        require(config.getInitParameter("ns-name"));
         handler = createServiceMethod(config.getInitParameter("ns-name"),
                                       config.getInitParameter("handler-name"));
 
         // Init
-        require(config.getInitParameter("init-ns-name"));
         invoke(config.getInitParameter("init-ns-name"),
                config.getInitParameter("init-name"));
+    }
+
+    public static IFn fn(String ns, String fnName) {
+        require(ns);
+        return (IFn) RT.var(ns, fnName);
     }
 
     public void service(ServletRequest request, ServletResponse response) {
         handler.invoke(this, request, response);
     }
 
-    private void require(String namespace) {
+    private static void require(String namespace) {
         REQUIRE.invoke(SYMBOL.invoke(namespace));
     }
 
     private IFn createServiceMethod(String namespace, String handler) {
-        return (IFn) MAKE_SERVICE_METHOD.invoke(DEREF.invoke(RT.var(namespace, handler)));
+        return (IFn) MAKE_SERVICE_METHOD.invoke(fn(namespace, handler));
     }
 
     private void invoke(String namespace, String var) {
-        RT.var(namespace, var).invoke();
+        fn(namespace, var).invoke();
     }
-
 }
