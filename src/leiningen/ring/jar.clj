@@ -20,10 +20,10 @@
                     (assoc-in [:ring :auto-reload?] false))]
     (compile-form project main-ns
       `(do (ns ~main-ns
-             (:require ring.server.leiningen)
              (:gen-class))
            (defn ~'-main []
-             (ring.server.leiningen/serve '~options))))))
+             (require 'ring.server.leiningen)
+             ((resolve 'ring.server.leiningen/serve) '~options))))))
 
 (defn add-main-class [project]
   (update-project project assoc :main (symbol (main-namespace project))))
