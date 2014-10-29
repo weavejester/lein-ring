@@ -3,7 +3,7 @@
         [leiningen.ring.server :only (add-server-dep)])
   (:require [leiningen.ring.jar :as jar]
             [leiningen.clean :as clean]
-            [leiningen.uberjar]))
+            leiningen.uberjar))
 
 (defn- assoc-profile [project profile-name key value]
   (let [profile (get-in project [:profiles profile-name])]
@@ -25,5 +25,6 @@
   (ensure-handler-set! project)
   (when (:auto-clean project true)
     (clean/clean project))
-  (let [project (-> project add-server-dep no-uberjar-clean)]
+  (let [project (-> project add-server-dep jar/add-main-class no-uberjar-clean)]
+    (jar/compile-main project)
     (leiningen.uberjar/uberjar project)))
