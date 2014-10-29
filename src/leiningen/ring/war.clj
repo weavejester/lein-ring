@@ -6,12 +6,12 @@
             [clojure.string :as string]
             [leinjacker.utils :as lju]
             [leinjacker.deps :as deps])
-  (:import (java.util.jar Manifest
+  (:import [java.util.jar Manifest
                           JarEntry
-                          JarOutputStream)
-           (java.io BufferedOutputStream 
+                          JarOutputStream]
+           [java.io BufferedOutputStream
                     FileOutputStream
-                    ByteArrayInputStream)))
+                    ByteArrayInputStream]))
 
 (defn default-war-name [project]
   (or (get-in project [:ring :war-name])
@@ -201,7 +201,7 @@
                            (lju/try-resolve 'leiningen.core.project/unmerge-profiles))]
     (unmerge-fn project [:default])
     project))
-        
+
 (defn add-servlet-dep [project]
   (-> project
       (deps/add-if-missing '[ring/ring-servlet "1.2.1"])
