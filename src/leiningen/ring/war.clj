@@ -123,7 +123,8 @@
         [init-ns init-name]       (split-symbol
                                     (:init ring-options))
         [destroy-ns destroy-name] (split-symbol
-                                    (:destroy ring-options))]
+                                    (:destroy ring-options))
+        add-path-info? (:servlet-path-info? ring-options true)]
     (if (contains? ring-options :web-xml)
       (slurp (:web-xml ring-options))
       (indent-str
@@ -152,6 +153,9 @@
           [:init-param
            [:param-name "destroy-name"]
            [:param-value destroy-name]]
+          [:init-param
+           [:param-name "path-info"]
+           [:param-value add-path-info?]]
           [:load-on-startup 0]]
          [:servlet-mapping
           [:servlet-name (servlet-name project)]
@@ -215,7 +219,7 @@
       (deps/add-if-missing '[javax.servlet/servlet-api "2.5"])))
 
 (defn copy-servlet-listener [compile-path]
-  (doseq [class-name ["Servlet" "Listener"]]
+  (doseq [class-name ["Servlet" "Listener" "Servlet$1"]]
     (let [w (io/file compile-path
                      "lein"
                      "ring"
