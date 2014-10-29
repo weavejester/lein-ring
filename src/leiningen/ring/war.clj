@@ -116,17 +116,19 @@
 
 (def default-servlet-version "2.5")
 
+(defn split-symbol [sym]
+  (if sym
+    [(name (namespace sym)) (name sym)]
+    ["" ""]))
+
 (defn make-web-xml [project]
-  (let [ring-options (:ring project)
-        handler-sym (get-in project [:ring :handler])
-        handler-ns  (name (namespace handler-sym))
-        handler-name (name handler-sym)
-        init-sym    (get-in project [:ring :init])
-        destroy-sym (get-in project [:ring :destroy])
-        init-ns     (name (namespace init-sym))
-        init-name     (name init-sym)
-        destroy-ns  (name (namespace destroy-sym))
-        destroy-name (name destroy-sym)]
+  (let [ring-options              (:ring project)
+        [handler-ns handler-name] (split-symbol
+                                    (:handler ring-options))
+        [init-ns init-name]       (split-symbol
+                                    (:init ring-options))
+        [destroy-ns destroy-name] (split-symbol
+                                    (:destroy ring-options))]
     (if (contains? ring-options :web-xml)
       (slurp (:web-xml ring-options))
       (indent-str

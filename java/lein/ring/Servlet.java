@@ -42,6 +42,9 @@ public class Servlet extends GenericServlet {
     }
 
     public static IFn fn(String ns, String fnName) {
+        if (ns == "") {
+            return null;
+        }
         require(ns);
         return (IFn) RT.var(ns, fnName);
     }
@@ -59,6 +62,9 @@ public class Servlet extends GenericServlet {
     }
 
     private void invoke(String namespace, String var) {
-        fn(namespace, var).invoke();
+        IFn f = fn(namespace, var);
+        if (f != null) {
+            f.invoke();
+        }
     }
 }
