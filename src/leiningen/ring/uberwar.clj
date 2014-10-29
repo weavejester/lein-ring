@@ -67,24 +67,8 @@
                        war/add-servlet-dep)
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))
-         (let [war-path (war/war-file-path project war-name)
-               f (io/file (:compile-path project)
-                          "lein"
-                          "ring"
-                          "Servlet.class")
-               l (io/file (:compile-path project)
-                          "lein"
-                          "ring"
-                          "Listener.class")]
-           (.mkdirs (.getParentFile f))
-           (with-open [s (-> "lein/ring/Servlet.class"
-                             io/resource
-                             io/input-stream)]
-             (io/copy s f))
-           (with-open [lw (-> "lein/ring/Listener.class"
-                              io/resource
-                              io/input-stream)]
-             (io/copy lw l))
+         (let [war-path (war/war-file-path project war-name)]
+           (war/copy-servlet-listener (:compile-path project))
            (write-uberwar project war-path)
            (println "Created" war-path)
            war-path)))))

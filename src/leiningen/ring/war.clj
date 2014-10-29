@@ -68,11 +68,6 @@
       (str (get-in project [:ring :handler])
            " servlet")))
 
-(defn has-listener? [project]
-  (let [ring-options (:ring project)]
-    (or (contains? ring-options :init)
-        (contains? ring-options :destroy))))
-
 (defn default-listener-class [project]
   (let [listener-sym (or (get-in project [:ring :init])
                          (get-in project [:ring :destroy]))
@@ -219,6 +214,20 @@
       (deps/add-if-missing '[ring/ring-servlet "1.2.1"])
       (deps/add-if-missing '[javax.servlet/servlet-api "2.5"])))
 
+(defn copy-servlet-listener [compile-path]
+  (doseq [class-name ["Servlet" "Listener"]]
+    (let [w (io/file compile-path
+                     "lein"
+                     "ring"
+                     (str class-name ".class"))]
+      (.mkdirs (.getParentFile w))
+      (with-open [r (-> "lein/ring/%s.class"
+                        (format class-name)
+                        io/resource
+                        io/input-stream)]
+        (io/copy r w)))))
+
+
 (defn war
   "Create a $PROJECT-$VERSION.war file."
   ([project]
@@ -231,6 +240,7 @@
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))
          (let [war-path (war-file-path project war-name)]
+           (copy-servlet-listener (:compile-path project))
            (write-war project war-path)
            (println "Created" war-path)
            war-path)))))
