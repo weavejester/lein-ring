@@ -23,8 +23,8 @@ public class Servlet extends GenericServlet {
 
     public IFn method;
 
-    public static Var REQUIRE;
-    public static Var SYMBOL;
+    public Var REQUIRE;
+    public Var SYMBOL;
 
     public Servlet() {;}
 
@@ -36,7 +36,7 @@ public class Servlet extends GenericServlet {
         initHandler(config);
     }
 
-    public static void initCljRuntime() {
+    public void initCljRuntime() {
         REQUIRE = RT.var("clojure.core", "require");
         SYMBOL = RT.var("clojure.core", "symbol");
     }
@@ -52,7 +52,7 @@ public class Servlet extends GenericServlet {
                config.getInitParameter("destroy-name")));
     }
 
-    public IFn initHandler(ServletConfig config) {
+    public void initHandler(ServletConfig config) {
         IFn handler = fn(config.getInitParameter("ns-name"),
                          config.getInitParameter("handler-name"));
 
@@ -63,7 +63,7 @@ public class Servlet extends GenericServlet {
         method = createServiceMethod(handler);
     }
 
-    public static IFn fn(String ns, String fnName) {
+    public IFn fn(String ns, String fnName) {
         if (ns == "") {
             return null;
         }
@@ -102,7 +102,7 @@ public class Servlet extends GenericServlet {
         method.invoke(this, request, response);
     }
 
-    private static void require(String namespace) {
+    private void require(String namespace) {
         REQUIRE.invoke(SYMBOL.invoke(namespace));
     }
 
