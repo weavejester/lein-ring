@@ -36,23 +36,23 @@ public class Servlet extends GenericServlet {
         initHandler(config);
     }
 
-    public void initCljRuntime() {
+    private void initCljRuntime() {
         REQUIRE = RT.var("clojure.core", "require");
         SYMBOL = RT.var("clojure.core", "symbol");
     }
 
-    public void doInit(ServletConfig config) {
+    private void doInit(ServletConfig config) {
         invoke(config.getInitParameter("init-ns-name"),
                config.getInitParameter("init-name"));
     }
 
-    public void setDestroy(ServletConfig config) {
+    private void setDestroy(ServletConfig config) {
         Listener.setDestructor(
             fn(config.getInitParameter("destroy-ns-name"),
                config.getInitParameter("destroy-name")));
     }
 
-    public void initHandler(ServletConfig config) {
+    private void initHandler(ServletConfig config) {
         IFn handler = fn(config.getInitParameter("ns-name"),
                          config.getInitParameter("handler-name"));
 
@@ -63,14 +63,14 @@ public class Servlet extends GenericServlet {
         method = createServiceMethod(handler);
     }
 
-    public IFn fn(String ns, String fnName) {
+    private IFn fn(String ns, String fnName) {
         if (ns == "") {
             return null;
         }
         require(ns);
         return (IFn) RT.var(ns, fnName);
     }
-    public IFn contextMiddleware(final IFn handler) {
+    private IFn contextMiddleware(final IFn handler) {
         final Keyword SERVLET_REQUEST = keyword("servlet-request");
         final Keyword CONTEXT = keyword("context");
         final Keyword URI = keyword("uri");
@@ -94,7 +94,7 @@ public class Servlet extends GenericServlet {
         };
     }
 
-    public Keyword keyword(String s) {
+    private Keyword keyword(String s) {
         return Keyword.intern(null, s);
     }
 
