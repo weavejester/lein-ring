@@ -1,11 +1,11 @@
 (ns leiningen.ring.war
   (:require [leiningen.compile :as compile]
-            [clojure.data.xml :refer [sexp-as-element indent-str]]
-            [leiningen.ring.util :refer :all]
             [clojure.java.io :as io]
             [clojure.string :as string]
             [leinjacker.utils :as lju]
             [leinjacker.deps :as deps])
+  (:use [clojure.data.xml :only [sexp-as-element indent-str]]
+        leiningen.ring.util)
   (:import [java.util.jar Manifest
                           JarEntry
                           JarOutputStream]
