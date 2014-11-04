@@ -23,17 +23,36 @@ public class Servlet extends GenericServlet {
 
     public IFn method;
 
-    public static Var REQUIRE = RT.var("clojure.core", "require");
-    public static Var SYMBOL = RT.var("clojure.core", "symbol");
-    public static IFn MAKE_SERVICE_METHOD =
-        fn("ring.util.servlet", "make-service-method");
+    public static Var REQUIRE;
+    public static Var SYMBOL;
 
     public Servlet() {;}
 
     public void init() throws ServletException {
         ServletConfig config = this.getServletConfig();
+        initCljRuntime();
+        setDestroy(config);
+        doInit(config);
+        initHandler(config);
+    }
 
-        // Handler
+    public static void initCljRuntime() {
+        REQUIRE = RT.var("clojure.core", "require");
+        SYMBOL = RT.var("clojure.core", "symbol");
+    }
+
+    public void doInit(ServletConfig config) {
+        invoke(config.getInitParameter("init-ns-name"),
+               config.getInitParameter("init-name"));
+    }
+
+    public void setDestroy(ServletConfig config) {
+        Listener.setDestructor(
+            fn(config.getInitParameter("destroy-ns-name"),
+               config.getInitParameter("destroy-name")));
+    }
+
+    public IFn initHandler(ServletConfig config) {
         IFn handler = fn(config.getInitParameter("ns-name"),
                          config.getInitParameter("handler-name"));
 
@@ -42,15 +61,6 @@ public class Servlet extends GenericServlet {
         }
 
         method = createServiceMethod(handler);
-
-        // Init
-        invoke(config.getInitParameter("init-ns-name"),
-               config.getInitParameter("init-name"));
-
-        // Set up destructor
-        Listener.setDestructor(
-            fn(config.getInitParameter("destroy-ns-name"),
-               config.getInitParameter("destroy-name")));
     }
 
     public static IFn fn(String ns, String fnName) {
@@ -97,7 +107,9 @@ public class Servlet extends GenericServlet {
     }
 
     private IFn createServiceMethod(IFn handler) {
-        return (IFn) MAKE_SERVICE_METHOD.invoke(handler);
+        IFn makeServiceMethod =
+            fn("ring.util.servlet", "make-service-method");
+        return (IFn) makeServiceMethod.invoke(handler);
     }
 
     private void invoke(String namespace, String var) {
