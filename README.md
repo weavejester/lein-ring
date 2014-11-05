@@ -193,7 +193,8 @@ However, there is another sort of resource, one accessed through the
 `ServletContext` object. These resources are usually not on the classpath,
 and are instead placed in the root of the war file. If you happen to need this
 functionality, you can place your files in the directory specified by the
-`:war-resources-path` key, which defaults to "war-resources". (As with
+`:war-resources-path` key (within the project map, rather than the map 
+specified by `:ring`), which defaults to "war-resources". (As with
 normal resources, here you can use `:war-resource-paths` to include multiple
 directories.) It's recommended that you only use WAR resources for
 compatibility with legacy Java interfaces; under most circumstances, you
