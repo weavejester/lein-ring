@@ -54,7 +54,9 @@
 (defn start-nrepl-expr [project]
   (let [port (-> project :ring :nrepl (:port 0))
         handler (nrepl-handler (nrepl-middleware project))]
-    `(let [{port# :port} (clojure.tools.nrepl.server/start-server :port ~port :handler ~handler)]
+    `(let [{port# :port} (clojure.tools.nrepl.server/start-server
+                          :port ~port
+                          :handler ~handler)]
        (doseq [port-file# ["target/repl-port" ".nrepl-port"]]
          (-> port-file#
              java.io.File.
@@ -87,6 +89,6 @@
 (defn server
   "Start a Ring server and open a browser."
   ([project]
-   (server-task project {}))
+     (server-task project {}))
   ([project port]
-   (server-task project {:port (Integer. port)})))
+     (server-task project {:port (Integer. port)})))
