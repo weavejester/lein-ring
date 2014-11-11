@@ -45,8 +45,10 @@
 
 (defn start-nrepl-expr [project]
   (let [port (-> project :ring :nrepl (:port 0))
-        middleware (-> project :ring :nrepl :nrepl-middleware)]
-    `(let [{port# :port} (clojure.tools.nrepl.server/start-server :port ~port :handler (apply clojure.tools.nrepl.server/default-handler middleware))]
+        middleware (-> project :ring :nrepl :nrepl-middleware)
+        handler `(clojure.tools.nrepl.server/default-handler
+                   ~@(map #(if (symbol? %) (list 'var %) %) middleware))]
+    `(let [{port# :port} (clojure.tools.nrepl.server/start-server :port ~port :handler ~handler)]
        (doseq [port-file# ["target/repl-port" ".nrepl-port"]]
          (-> port-file#
              java.io.File.
@@ -66,16 +68,19 @@
      (if (nrepl? project)
        `(do ~(start-nrepl-expr project) ~(start-server-expr project))
        (start-server-expr project))
-     (load-namespaces
-      'ring.server.leiningen
-      (if (nrepl? project) 'clojure.tools.nrepl.server)
-      (-> project :ring :handler)
-      (-> project :ring :init)
-      (-> project :ring :destroy)))))
+     (apply load-namespaces
+            (let [load-ns ['ring.server.leiningen
+                           (if (nrepl? project) 'clojure.tools.nrepl.server)
+                           (-> project :ring :handler)
+                           (-> project :ring :init)
+                           (-> project :ring :destroy)]]
+              (if (nrepl? project)
+                (into load-ns (-> project :ring :nrepl :nrepl-middleware))
+                load-ns))))))
 
 (defn server
   "Start a Ring server and open a browser."
   ([project]
-     (server-task project {}))
+   (server-task project {}))
   ([project port]
-     (server-task project {:port (Integer. port)})))
+   (server-task project {:port (Integer. port)})))
