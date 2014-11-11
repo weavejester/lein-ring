@@ -43,11 +43,17 @@
     (add-dep project '[org.clojure/tools.nrepl "0.2.3"])
     project))
 
+(defn nrepl-middleware [project]
+  (or (-> project :ring :nrepl :nrepl-middleware)
+      (-> project :repl-options :nrepl-middleware)))
+
+(defn nrepl-handler [middleware]
+  `(clojure.tools.nrepl.server/default-handler
+     ~@(map #(if (symbol? %) (list 'var %) %) middleware)))
+
 (defn start-nrepl-expr [project]
   (let [port (-> project :ring :nrepl (:port 0))
-        middleware (-> project :ring :nrepl :nrepl-middleware)
-        handler `(clojure.tools.nrepl.server/default-handler
-                   ~@(map #(if (symbol? %) (list 'var %) %) middleware))]
+        handler (nrepl-handler (nrepl-middleware project))]
     `(let [{port# :port} (clojure.tools.nrepl.server/start-server :port ~port :handler ~handler)]
        (doseq [port-file# ["target/repl-port" ".nrepl-port"]]
          (-> port-file#
@@ -75,7 +81,7 @@
                            (-> project :ring :init)
                            (-> project :ring :destroy)]]
               (if (nrepl? project)
-                (into load-ns (-> project :ring :nrepl :nrepl-middleware))
+                (into load-ns (nrepl-middleware project))
                 load-ns))))))
 
 (defn server
