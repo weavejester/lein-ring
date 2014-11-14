@@ -68,11 +68,6 @@
       (str (get-in project [:ring :handler])
            " servlet")))
 
-(defn has-listener? [project]
-  (let [ring-options (:ring project)]
-    (or (contains? ring-options :init)
-        (contains? ring-options :destroy))))
-
 (defn default-listener-class [project]
   (let [listener-sym (or (get-in project [:ring :init])
                          (get-in project [:ring :destroy]))
@@ -116,65 +111,55 @@
 
 (def default-servlet-version "2.5")
 
+(defn split-symbol [sym]
+  (if sym
+    [(name (namespace sym)) (name sym)]
+    ["" ""]))
+
 (defn make-web-xml [project]
-  (let [ring-options (:ring project)]
+  (let [ring-options              (:ring project)
+        [handler-ns handler-name] (split-symbol
+                                    (:handler ring-options))
+        [init-ns init-name]       (split-symbol
+                                    (:init ring-options))
+        [destroy-ns destroy-name] (split-symbol
+                                    (:destroy ring-options))
+        add-path-info? (:servlet-path-info? ring-options true)]
     (if (contains? ring-options :web-xml)
       (slurp (:web-xml ring-options))
       (indent-str
-        (sexp-as-element
-          [:web-app
-           (get web-app-attrs
-                (get-in project [:ring :servlet-version] default-servlet-version)
-                {})
-           (if (has-listener? project)
-             [:listener
-              [:listener-class (listener-class project)]])
-           [:servlet
-            [:servlet-name  (servlet-name project)]
-            [:servlet-class (servlet-class project)]]
-           [:servlet-mapping
-            [:servlet-name (servlet-name project)]
-            [:url-pattern (url-pattern project)]]])))))
-
-(defn generate-handler [project handler-sym]
-  (if (get-in project [:ring :servlet-path-info?] true)
-    `(fn [request#]
-       (let [context# ^String (.getContextPath (:servlet-request request#))]
-         (~handler-sym
-          (assoc request#
-            :context context#
-            :path-info (-> (:uri request#) (subs (.length context#)) not-empty (or "/"))))))
-    handler-sym))
-
-(defn compile-servlet [project]
-  (let [handler-sym (get-in project [:ring :handler])
-        handler-ns  (symbol (namespace handler-sym))
-        servlet-ns  (symbol (servlet-ns project))]
-    (compile-form project servlet-ns
-      `(do (ns ~servlet-ns
-             (:require ring.util.servlet ~handler-ns)
-             (:gen-class :extends javax.servlet.http.HttpServlet))
-           (ring.util.servlet/defservice
-             ~(generate-handler project handler-sym))))))
-
-(defn compile-listener [project]
-  (let [init-sym    (get-in project [:ring :init])
-        destroy-sym (get-in project [:ring :destroy])
-        init-ns     (and init-sym    (symbol (namespace init-sym)))
-        destroy-ns  (and destroy-sym (symbol (namespace destroy-sym)))
-        project-ns  (symbol (listener-ns project))]
-    (compile-form project project-ns
-      `(do (ns ~project-ns
-             (:require ~@(set (remove nil? [init-ns destroy-ns])))
-             (:gen-class :implements [javax.servlet.ServletContextListener]))
-           ~(let [servlet-context-event (gensym)]
-              `(do
-                 (defn ~'-contextInitialized [this# ~servlet-context-event]
-                   ~(if init-sym
-                      `(~init-sym)))
-                 (defn ~'-contextDestroyed [this# ~servlet-context-event]
-                   ~(if destroy-sym
-                      `(~destroy-sym)))))))))
+       (sexp-as-element
+        [:web-app
+         [:listener
+          [:listener-class "lein.ring.Listener"] ]
+         [:servlet
+          [:servlet-name (servlet-name project)]
+          [:servlet-class "lein.ring.Servlet"]
+          [:init-param
+           [:param-name "ns-name"]
+           [:param-value handler-ns]]
+          [:init-param
+           [:param-name "handler-name"]
+           [:param-value handler-name]]
+          [:init-param
+           [:param-name "init-ns-name"]
+           [:param-value init-ns]]
+          [:init-param
+           [:param-name "init-name"]
+           [:param-value init-name]]
+          [:init-param
+           [:param-name "destroy-ns-name"]
+           [:param-value destroy-ns]]
+          [:init-param
+           [:param-name "destroy-name"]
+           [:param-value destroy-name]]
+          [:init-param
+           [:param-name "path-info"]
+           [:param-value add-path-info?]]
+          [:load-on-startup 0]]
+         [:servlet-mapping
+          [:servlet-name (servlet-name project)]
+          [:url-pattern (url-pattern project)]]])))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
@@ -207,7 +192,8 @@
 
 (defn war-resources-paths [project]
   (filter identity
-    (distinct (concat [(:war-resources-path project "war-resources")] (:war-resource-paths project)))))
+          (distinct (concat [(:war-resources-path project "war-resources")]
+                            (:war-resource-paths project)))))
 
 (defn write-war [project war-path]
   (with-open [war-stream (create-war project war-path)]
@@ -232,6 +218,20 @@
       (deps/add-if-missing '[ring/ring-servlet "1.2.1"])
       (deps/add-if-missing '[javax.servlet/servlet-api "2.5"])))
 
+(defn copy-servlet-listener [compile-path]
+  (doseq [class-name ["Servlet" "Listener" "Servlet$1"]]
+    (let [w (io/file compile-path
+                     "lein"
+                     "ring"
+                     (str class-name ".class"))]
+      (.mkdirs (.getParentFile w))
+      (with-open [r (-> "lein/ring/%s.class"
+                        (format class-name)
+                        io/resource
+                        io/input-stream)]
+        (io/copy r w)))))
+
+
 (defn war
   "Create a $PROJECT-$VERSION.war file."
   ([project]
@@ -244,9 +244,7 @@
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))
          (let [war-path (war-file-path project war-name)]
-           (compile-servlet project)
-           (if (has-listener? project)
-             (compile-listener project))
+           (copy-servlet-listener (:compile-path project))
            (write-war project war-path)
            (println "Created" war-path)
            war-path)))))

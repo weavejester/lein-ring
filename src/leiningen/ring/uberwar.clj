@@ -68,9 +68,7 @@
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))
          (let [war-path (war/war-file-path project war-name)]
-           (war/compile-servlet project)
-           (if (war/has-listener? project)
-             (war/compile-listener project))
+           (war/copy-servlet-listener (:compile-path project))
            (write-uberwar project war-path)
            (println "Created" war-path)
            war-path)))))
