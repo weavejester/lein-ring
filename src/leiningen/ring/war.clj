@@ -68,11 +68,6 @@
       (str (get-in project [:ring :handler])
            " servlet")))
 
-(defn has-listener? [project]
-  (let [ring-options (:ring project)]
-    (or (contains? ring-options :init)
-        (contains? ring-options :destroy))))
-
 (defn default-listener-class [project]
   (let [listener-sym (or (get-in project [:ring :init])
                          (get-in project [:ring :destroy]))
@@ -126,9 +121,8 @@
            (get web-app-attrs
                 (get-in project [:ring :servlet-version] default-servlet-version)
                 {})
-           (if (has-listener? project)
-             [:listener
-              [:listener-class (listener-class project)]])
+           [:listener
+            [:listener-class (listener-class project)]]
            [:servlet
             [:servlet-name  (servlet-name project)]
             [:servlet-class (servlet-class project)]]
@@ -179,6 +173,7 @@
 (defn compile-listener [project]
   (let [init-sym    (get-in project [:ring :init])
         destroy-sym (get-in project [:ring :destroy])
+        handler-ns  (symbol (namespace (get-in project [:ring :handler])))
         project-ns  (symbol (listener-ns project))]
     (compile-form project project-ns
       `(do (ns ~project-ns
@@ -187,7 +182,8 @@
               `(do
                  (defn ~'-contextInitialized [this# ~servlet-context-event]
                    ~(if init-sym
-                      `(~(require-and-resolve init-sym))))
+                      `(~(require-and-resolve init-sym)))
+                   (require '~handler-ns))
                  (defn ~'-contextDestroyed [this# ~servlet-context-event]
                    ~(if destroy-sym
                       `(~(require-and-resolve destroy-sym))))))))))
@@ -261,8 +257,7 @@
        (when-not (and (number? result) (pos? result))
          (let [war-path (war-file-path project war-name)]
            (compile-servlet project)
-           (if (has-listener? project)
-             (compile-listener project))
+           (compile-listener project)
            (write-war project war-path)
            (println "Created" war-path)
            war-path)))))
