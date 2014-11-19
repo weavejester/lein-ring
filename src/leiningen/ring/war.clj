@@ -141,39 +141,20 @@
               :path-info (-> (:uri request#) (subs (.length context#)) not-empty (or "/")))))))
     (require-and-resolve handler-sym)))
 
-(defn write-service
-  "Returns code for a service method with an optional prefix suitable for
-  being used by genclass to compile a HttpServlet class.
-
-  Twin to ring.util.servlet/write-service, but called as a function to
-  generate code, rather than as a macro."
-  ([handler]
-   (write-service "-" handler))
-  ([prefix handler]
-   `(def ~(symbol (str prefix "service"))
-      (let [method# (atom nil)]
-        (fn [servlet# request# response#]
-          ((or
-             @method#
-             (reset! method#
-               (~(require-and-resolve
-                   `ring.util.servlet/make-service-method)
-                 ~handler)))
-           servlet# request# response#))))))
-
 (defn compile-servlet [project]
-  (let [handler-sym (get-in project [:ring :handler])
-        servlet-ns  (symbol (servlet-ns project))]
+  (let [servlet-ns  (symbol (servlet-ns project))]
     (compile-form project servlet-ns
       `(do (ns ~servlet-ns
              (:gen-class :extends javax.servlet.http.HttpServlet))
-           ~(write-service
-              (generate-handler project handler-sym))))))
+           (def ~'service-method)
+           (defn ~'-service [servlet# request# response#]
+             (~'service-method servlet# request# response#))))))
 
 (defn compile-listener [project]
   (let [init-sym    (get-in project [:ring :init])
         destroy-sym (get-in project [:ring :destroy])
-        handler-ns  (symbol (namespace (get-in project [:ring :handler])))
+        handler-sym (get-in project [:ring :handler])
+        servlet-ns  (servlet-ns project)
         project-ns  (symbol (listener-ns project))]
     (compile-form project project-ns
       `(do (ns ~project-ns
@@ -183,7 +164,13 @@
                  (defn ~'-contextInitialized [this# ~servlet-context-event]
                    ~(if init-sym
                       `(~(require-and-resolve init-sym)))
-                   (require '~handler-ns))
+                   (let [handler# ~(generate-handler project handler-sym)
+                         make-service-method# ~(require-and-resolve
+                                                 'ring.util.servlet/make-service-method)
+                         method# (make-service-method# handler#)]
+                     (alter-var-root
+                       ~(require-and-resolve (symbol servlet-ns "service-method"))
+                       (constantly method#))))
                  (defn ~'-contextDestroyed [this# ~servlet-context-event]
                    ~(if destroy-sym
                       `(~(require-and-resolve destroy-sym))))))))))
