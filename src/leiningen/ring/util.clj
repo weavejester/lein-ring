@@ -5,9 +5,12 @@
             leiningen.deps))
 
 (defn require-and-resolve [qual-sym]
-  `(do
+  `(try
      (require (quote ~(symbol (namespace qual-sym))))
-     (resolve (quote ~qual-sym))))
+     (resolve (quote ~qual-sym))
+     (catch Exception e#
+       (.printStackTrace e#)
+       (throw e#))))
 
 (defn ensure-handler-set!
   "Ensure the :handler option is set in the project map."
