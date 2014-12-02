@@ -7,7 +7,9 @@
 (defn require-and-resolve [qual-sym]
   `(try
      (require (quote ~(symbol (namespace qual-sym))))
-     (resolve (quote ~qual-sym))
+     (or
+       (resolve (quote ~qual-sym))
+       (throw (Exception. ~(str "could not locate var " qual-sym))))
      (catch Exception e#
        (.printStackTrace e#)
        (throw e#))))
