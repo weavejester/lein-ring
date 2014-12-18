@@ -221,12 +221,6 @@
       (dir-entry war-stream project "" path))
     war-stream))
 
-(defn unmerge-profiles [project]
-  (if-let [unmerge-fn (and (= 2 (lju/lein-generation))
-                           (lju/try-resolve 'leiningen.core.project/unmerge-profiles))]
-    (unmerge-fn project [:default])
-    project))
-
 (defn add-servlet-dep [project]
   (-> project
       (deps/add-if-missing '[ring/ring-servlet "1.2.1"])
@@ -239,7 +233,7 @@
   ([project war-name]
      (ensure-handler-set! project)
       (let [project (-> project
-                        unmerge-profiles
+                        (unmerge-profiles [:default])
                         add-servlet-dep)
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))
