@@ -132,14 +132,14 @@
 
 (defn generate-handler [project handler-sym]
   (if (get-in project [:ring :servlet-path-info?] true)
-    `(let [handler# ~(require-and-resolve handler-sym)]
+    `(let [handler# ~(generate-resolve handler-sym)]
        (fn [request#]
          (let [context# ^String (.getContextPath (:servlet-request request#))]
            (handler#
             (assoc request#
               :context context#
               :path-info (-> (:uri request#) (subs (.length context#)) not-empty (or "/")))))))
-    (require-and-resolve handler-sym)))
+    (generate-resolve handler-sym)))
 
 (defn compile-servlet [project]
   (let [servlet-ns  (symbol (servlet-ns project))]
@@ -163,17 +163,17 @@
               `(do
                  (defn ~'-contextInitialized [this# ~servlet-context-event]
                    ~(if init-sym
-                      `(~(require-and-resolve init-sym)))
+                      `(~(generate-resolve init-sym)))
                    (let [handler# ~(generate-handler project handler-sym)
-                         make-service-method# ~(require-and-resolve
+                         make-service-method# ~(generate-resolve
                                                  'ring.util.servlet/make-service-method)
                          method# (make-service-method# handler#)]
                      (alter-var-root
-                       ~(require-and-resolve (symbol servlet-ns "service-method"))
+                       ~(generate-resolve (symbol servlet-ns "service-method"))
                        (constantly method#))))
                  (defn ~'-contextDestroyed [this# ~servlet-context-event]
                    ~(if destroy-sym
-                      `(~(require-and-resolve destroy-sym))))))))))
+                      `(~(generate-resolve destroy-sym))))))))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)

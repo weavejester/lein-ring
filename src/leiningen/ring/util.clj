@@ -4,7 +4,7 @@
             [clojure.java.io :as io]
             leiningen.deps))
 
-(defn require-and-resolve [qual-sym]
+(defn generate-resolve [qual-sym]
   `(try
      (require (quote ~(symbol (namespace qual-sym))))
      (or
