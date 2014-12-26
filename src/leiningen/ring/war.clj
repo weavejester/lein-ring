@@ -156,6 +156,7 @@
         handler-sym (get-in project [:ring :handler])
         servlet-ns  (servlet-ns project)
         project-ns  (symbol (listener-ns project))]
+    (assert-vars-exist project init-sym destroy-sym handler-sym)
     (compile-form project project-ns
       `(do (ns ~project-ns
              (:gen-class :implements [javax.servlet.ServletContextListener]))

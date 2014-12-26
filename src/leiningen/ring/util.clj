@@ -4,15 +4,21 @@
             [clojure.java.io :as io]
             leiningen.deps))
 
+(defn assert-vars-exist [project & var-syms]
+  (eval-in-project
+    project
+    (into [] var-syms)
+    `(require '[~@(->>
+                    var-syms
+                    (filter identity)
+                    (map namespace)
+                    (map symbol)
+                    distinct)])))
+
 (defn generate-resolve [qual-sym]
-  `(try
-     (require (quote ~(symbol (namespace qual-sym))))
-     (or
-       (resolve (quote ~qual-sym))
-       (throw (Exception. ~(str "could not locate var " qual-sym))))
-     (catch Exception e#
-       (.printStackTrace e#)
-       (throw e#))))
+  `(do
+     (require '~(symbol (namespace qual-sym)))
+     (resolve '~qual-sym)))
 
 (defn ensure-handler-set!
   "Ensure the :handler option is set in the project map."
