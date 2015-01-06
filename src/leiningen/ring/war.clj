@@ -70,7 +70,8 @@
 
 (defn default-listener-class [project]
   (let [listener-sym (or (get-in project [:ring :init])
-                         (get-in project [:ring :destroy]))
+                         (get-in project [:ring :destroy])
+                         (get-in project [:ring :handler]))
         ns-parts     (-> (namespace listener-sym)
                          (string/replace "-" "_")
                          (string/split #"\.")
