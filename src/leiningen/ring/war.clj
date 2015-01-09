@@ -68,14 +68,10 @@
       (str (get-in project [:ring :handler])
            " servlet")))
 
-(defn has-listener? [project]
-  (let [ring-options (:ring project)]
-    (or (contains? ring-options :init)
-        (contains? ring-options :destroy))))
-
 (defn default-listener-class [project]
   (let [listener-sym (or (get-in project [:ring :init])
-                         (get-in project [:ring :destroy]))
+                         (get-in project [:ring :destroy])
+                         (get-in project [:ring :handler]))
         ns-parts     (-> (namespace listener-sym)
                          (string/replace "-" "_")
                          (string/split #"\.")
@@ -126,9 +122,8 @@
            (get web-app-attrs
                 (get-in project [:ring :servlet-version] default-servlet-version)
                 {})
-           (if (has-listener? project)
-             [:listener
-              [:listener-class (listener-class project)]])
+           [:listener
+            [:listener-class (listener-class project)]]
            [:servlet
             [:servlet-name  (servlet-name project)]
             [:servlet-class (servlet-class project)]]
@@ -138,43 +133,49 @@
 
 (defn generate-handler [project handler-sym]
   (if (get-in project [:ring :servlet-path-info?] true)
-    `(fn [request#]
-       (let [context# ^String (.getContextPath (:servlet-request request#))]
-         (~handler-sym
-          (assoc request#
-            :context context#
-            :path-info (-> (:uri request#) (subs (.length context#)) not-empty (or "/"))))))
-    handler-sym))
+    `(let [handler# ~(generate-resolve handler-sym)]
+       (fn [request#]
+         (let [context# ^String (.getContextPath (:servlet-request request#))]
+           (handler#
+            (assoc request#
+              :context context#
+              :path-info (-> (:uri request#) (subs (.length context#)) not-empty (or "/")))))))
+    (generate-resolve handler-sym)))
 
 (defn compile-servlet [project]
-  (let [handler-sym (get-in project [:ring :handler])
-        handler-ns  (symbol (namespace handler-sym))
-        servlet-ns  (symbol (servlet-ns project))]
+  (let [servlet-ns  (symbol (servlet-ns project))]
     (compile-form project servlet-ns
       `(do (ns ~servlet-ns
-             (:require ring.util.servlet ~handler-ns)
              (:gen-class :extends javax.servlet.http.HttpServlet))
-           (ring.util.servlet/defservice
-             ~(generate-handler project handler-sym))))))
+           (def ~'service-method)
+           (defn ~'-service [servlet# request# response#]
+             (~'service-method servlet# request# response#))))))
 
 (defn compile-listener [project]
   (let [init-sym    (get-in project [:ring :init])
         destroy-sym (get-in project [:ring :destroy])
-        init-ns     (and init-sym    (symbol (namespace init-sym)))
-        destroy-ns  (and destroy-sym (symbol (namespace destroy-sym)))
+        handler-sym (get-in project [:ring :handler])
+        servlet-ns  (servlet-ns project)
         project-ns  (symbol (listener-ns project))]
+    (assert-vars-exist project init-sym destroy-sym handler-sym)
     (compile-form project project-ns
       `(do (ns ~project-ns
-             (:require ~@(set (remove nil? [init-ns destroy-ns])))
              (:gen-class :implements [javax.servlet.ServletContextListener]))
            ~(let [servlet-context-event (gensym)]
               `(do
                  (defn ~'-contextInitialized [this# ~servlet-context-event]
                    ~(if init-sym
-                      `(~init-sym)))
+                      `(~(generate-resolve init-sym)))
+                   (let [handler# ~(generate-handler project handler-sym)
+                         make-service-method# ~(generate-resolve
+                                                 'ring.util.servlet/make-service-method)
+                         method# (make-service-method# handler#)]
+                     (alter-var-root
+                       ~(generate-resolve (symbol servlet-ns "service-method"))
+                       (constantly method#))))
                  (defn ~'-contextDestroyed [this# ~servlet-context-event]
                    ~(if destroy-sym
-                      `(~destroy-sym)))))))))
+                      `(~(generate-resolve destroy-sym))))))))))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)
@@ -245,8 +246,7 @@
        (when-not (and (number? result) (pos? result))
          (let [war-path (war-file-path project war-name)]
            (compile-servlet project)
-           (if (has-listener? project)
-             (compile-listener project))
+           (compile-listener project)
            (write-war project war-path)
            (println "Created" war-path)
            war-path)))))

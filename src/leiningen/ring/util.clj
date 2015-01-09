@@ -4,6 +4,22 @@
             [clojure.java.io :as io]
             leiningen.deps))
 
+(defn assert-vars-exist [project & var-syms]
+  (eval-in-project
+    project
+    (into [] var-syms)
+    `(require '[~@(->>
+                    var-syms
+                    (filter identity)
+                    (map namespace)
+                    (map symbol)
+                    distinct)])))
+
+(defn generate-resolve [qual-sym]
+  `(do
+     (require '~(symbol (namespace qual-sym)))
+     (resolve '~qual-sym)))
+
 (defn ensure-handler-set!
   "Ensure the :handler option is set in the project map."
   [project]
