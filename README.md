@@ -93,6 +93,10 @@ The following options affect the behavior of the web server started by
   If true, display a stacktrace when an exception is thrown.
   Defaults to true in development mode, false in production.
 
+* `:stacktrace-middleware` -
+  A symbol referencing the middleware to use for reporting
+  errors. Defaults to `ring.middleware.stacktrace/wrap-stacktrace`.
+
 * `:auto-reload?` -
   If true, automatically reload modified source files. Defaults to
   true in development mode, false in production.
