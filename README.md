@@ -202,3 +202,10 @@ normal resources, here you can use `:war-resource-paths` to include multiple
 directories.) It's recommended that you only use WAR resources for
 compatibility with legacy Java interfaces; under most circumstances, you
 should use the normal `:resources-path` instead.
+
+## License
+
+Copyright © 2015 James Reeves
+
+Distributed under the Eclipse Public License either version 1.0 or (at
+your option) any later version.
