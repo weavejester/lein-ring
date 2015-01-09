@@ -70,7 +70,8 @@
       (if (nrepl? project) 'clojure.tools.nrepl.server)
       (-> project :ring :handler)
       (-> project :ring :init)
-      (-> project :ring :destroy)))))
+      (-> project :ring :destroy)
+      (-> project :ring :stacktrace-middleware)))))
 
 (defn server
   "Start a Ring server and open a browser."
