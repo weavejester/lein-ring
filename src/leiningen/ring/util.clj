@@ -5,15 +5,17 @@
             leiningen.deps))
 
 (defn assert-vars-exist [project & var-syms]
-  (eval-in-project
-    project
-    (into [] var-syms)
-    `(require '[~@(->>
-                    var-syms
-                    (filter identity)
-                    (map namespace)
-                    (map symbol)
-                    distinct)])))
+  (let [namespaces (->>
+                     var-syms
+                     (filter identity)
+                     (map namespace)
+                     (map symbol)
+                     distinct)]
+    (eval-in-project
+      project
+      (into [] var-syms)
+      `(require ~@(for [n namespaces]
+                    `(quote ~n))))))
 
 (defn generate-resolve [qual-sym]
   `(do
