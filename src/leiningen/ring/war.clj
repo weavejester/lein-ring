@@ -208,7 +208,8 @@
 
 (defn war-resources-paths [project]
   (filter identity
-    (distinct (concat [(:war-resources-path project "war-resources")] (:war-resource-paths project)))))
+          (distinct (concat [(:war-resources-path project "war-resources")]
+                            (:war-resource-paths project)))))
 
 (defn write-war [project war-path]
   (with-open [war-stream (create-war project war-path)]

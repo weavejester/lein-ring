@@ -16,9 +16,8 @@
    `(require ~@(for [n (find-namespaces var-syms)] `(quote ~n)))))
 
 (defn generate-resolve [qual-sym]
-  `(do
-     (require '~(symbol (namespace qual-sym)))
-     (resolve '~qual-sym)))
+  `(do (require '~(symbol (namespace qual-sym)))
+       (resolve '~qual-sym)))
 
 (defn ensure-handler-set!
   "Ensure the :handler option is set in the project map."
