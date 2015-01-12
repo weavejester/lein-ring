@@ -4,18 +4,16 @@
             [clojure.java.io :as io]
             leiningen.deps))
 
+(defn find-namespaces [var-syms]
+  (->> (remove nil? var-syms)
+       (map (comp symbol namespace))
+       (distinct)))
+
 (defn assert-vars-exist [project & var-syms]
-  (let [namespaces (->>
-                     var-syms
-                     (filter identity)
-                     (map namespace)
-                     (map symbol)
-                     distinct)]
-    (eval-in-project
-      project
-      (into [] var-syms)
-      `(require ~@(for [n namespaces]
-                    `(quote ~n))))))
+  (eval-in-project
+   project
+   (into [] var-syms)
+   `(require ~@(for [n (find-namespaces var-syms)] `(quote ~n)))))
 
 (defn generate-resolve [qual-sym]
   `(do
