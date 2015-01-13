@@ -1,11 +1,13 @@
 (ns leiningen.ring.uberwar
   (:use leiningen.ring.util)
   (:require [leiningen.ring.war :as war]
+            [leiningen.jar :as jar]
             [leinjacker.deps :as deps]
             [leiningen.compile :as compile]
             [clojure.java.io :as io]
             [leinjacker.utils :as lju])
-  (:import [java.util.jar JarFile JarEntry]))
+  (:import [java.util.jar JarFile JarEntry]
+           (java.io File)))
 
 (defn default-uberwar-name [project]
   (or (get-in project [:ring :uberwar-name])
@@ -32,17 +34,24 @@
                    (not (contains-entry? file "javax/servlet/Servlet.class")))]
     file))
 
+(defn jar-entry [war project jar-file]
+  (let [dir-path (.getParent jar-file)
+            war-path (war/in-war-path "WEB-INF/lib/" dir-path jar-file)]
+        (war/file-entry war project war-path jar-file)))
+
 (defn jar-entries [war project]
   (doseq [jar-file (jar-dependencies project)]
-    (let [dir-path (.getParent jar-file)
-          war-path (war/in-war-path "WEB-INF/lib/" dir-path jar-file)]
-      (war/file-entry war project war-path jar-file))))
+    (jar-entry war project jar-file)))
 
 (defn write-uberwar [project war-path]
   (with-open [war-stream (war/create-war project war-path)]
-    (doto war-stream
-      (war/str-entry "WEB-INF/web.xml" (war/make-web-xml project))
-      (war/dir-entry project "WEB-INF/classes/" (:compile-path project)))
+    (war/str-entry war-stream "WEB-INF/web.xml" (war/make-web-xml project))
+    ;; if they want the AOT-compiled classes jar'd up first, then invoke lein's jar and include that.
+    ;; otherwise, include the classes directly in WEB-INF/classes
+    (if (get-in project [:ring :jar-classes?])
+      (let [jar-results (jar/jar project)]                  ; invoke the normal lein "jar" task and capture the results
+          (jar-entry war-stream project (File. (jar-results [:extension "jar"]))))
+      (war/dir-entry war-stream project "WEB-INF/classes/" (:compile-path project)))
     (doseq [path (source-and-resource-paths project)
             :when path]
       (war/dir-entry war-stream project "WEB-INF/classes/" path))
