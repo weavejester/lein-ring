@@ -76,13 +76,15 @@
      (if (nrepl? project)
        `(do ~(start-nrepl-expr project) ~(start-server-expr project))
        (start-server-expr project))
-     (load-namespaces
-      'ring.server.leiningen
-      (if (nrepl? project) 'clojure.tools.nrepl.server)
-      (if (nrepl? project) (nrepl-middleware project))
-      (-> project :ring :handler)
-      (-> project :ring :init)
-      (-> project :ring :destroy)))))
+     (apply load-namespaces
+            (let [load-ns ['ring.server.leiningen
+                           (if (nrepl? project) 'clojure.tools.nrepl.server)
+                           (-> project :ring :handler)
+                           (-> project :ring :init)
+                           (-> project :ring :destroy)]]
+              (if (nrepl? project)
+                (into load-ns (nrepl-middleware project))
+                load-ns))))))
 
 (defn server
   "Start a Ring server and open a browser."
