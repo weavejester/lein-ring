@@ -2,7 +2,8 @@
   (:use [leinjacker.eval :only (eval-in-project)])
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
-            leiningen.deps))
+            [leiningen.deps]
+            [leinjacker.utils :as lju]))
 
 (defn find-namespaces [var-syms]
   (->> (remove nil? var-syms)
@@ -70,3 +71,15 @@
                        '()
                        (concat [(:source-path project)] (:source-paths project)))]
     (distinct (concat source-paths resource-paths))))
+
+(defn unmerge-profiles [project profiles]
+  (if-let [unmerge-fn (and (= 2 (lju/lein-generation))
+                           (lju/try-resolve 'leiningen.core.project/unmerge-profiles))]
+    (unmerge-fn project profiles)
+    project))
+
+(defn merge-profiles [project profiles]
+  (if-let [merge-fn (and (= 2 (lju/lein-generation))
+                         (lju/try-resolve 'leiningen.core.project/merge-profiles))]
+    (merge-fn project profiles)
+    project))
