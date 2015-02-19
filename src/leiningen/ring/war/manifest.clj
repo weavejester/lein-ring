@@ -1,4 +1,7 @@
-(ns leiningen.ring.war.manifest)
+(ns leiningen.ring.war.manifest
+  (:require [clojure.string :as string])
+  (:import [java.util.jar Manifest]
+           [java.io ByteArrayInputStream]))
 
 "Mostly taken from leiningen.jar"
 
