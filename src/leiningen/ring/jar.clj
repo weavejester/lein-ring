@@ -25,12 +25,17 @@
            (defn ~'-main []
              (~(generate-resolve 'ring.server.leiningen/serve) '~options))))))
 
+(defn add-main-to-aot [aot-list main-ns]
+  (if (= aot-list [:all])
+    aot-list
+    (-> aot-list (conj main-ns) distinct)))
+
 (defn add-main-class [project]
   (let [main (symbol (main-namespace project))]
     (->
       project
       (update-project assoc :main main)
-      (update-project update-in [:aot] #(-> % (conj main) distinct)))))
+      (update-project update-in [:aot] add-main-to-aot main))))
 
 (defn jar
   "Create an executable $PROJECT-$VERSION.jar file."
