@@ -1,7 +1,7 @@
 (defproject lein-ring "0.9.4-SNAPSHOT"
   :description "Leiningen Ring plugin"
   :url "https://github.com/weavejester/lein-ring"
-  :scm {:name "lein-ring"
+  :scm {:name "git"
         :url "https://github.com/weavejester/lein-ring"}
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
