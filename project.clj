@@ -1,4 +1,4 @@
-(defproject lein-ring "0.9.3"
+(defproject lein-ring "0.9.4-SNAPSHOT"
   :description "Leiningen Ring plugin"
   :url "https://github.com/weavejester/lein-ring"
   :license {:name "Eclipse Public License"
