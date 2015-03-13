@@ -41,9 +41,11 @@
          (merge
            (if (get project-manifest "Main-Class")
              default-manifest
-             (assoc default-manifest
-               "Main-Class"
-               (munge (str (:main project 'clojure.main))))))
+             (if-let [main (:main project)]
+               (assoc default-manifest
+                 "Main-Class"
+                 (munge (str main)))
+               default-manifest)))
          manifest-map-to-reordered-seq
          (manifest-entries project)
          (cons "Manifest-Version: 1.0\n")  ;; Manifest-Version line must be first
