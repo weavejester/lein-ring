@@ -108,7 +108,11 @@ The following options affect the behavior of the web server started by
 * `:nrepl` - 
   A map of `:start?` and (optionally) `:port` keys. If `:start?` is true, 
   open up an nREPL server on the given port. `:start?` defaults to false, 
-  `:port` defaults to an arbitrary free port.
+  `:port` defaults to an arbitrary free port.  __NOTE: This option is only
+  for development with the `lein ring server` task.  Setting this option
+  will not cause a generated uberjar/uberwar to run an nREPL server.  If
+  you would like to run an nREPL server in your production app, then see
+  the clojure.tools.nrepl.server project.__
 
 ## Executable jar files
 
