@@ -1,8 +1,5 @@
 (ns leiningen.ring.uberwar
-  (:use leiningen.ring.util)
   (:require [leiningen.ring.war :as war]
-            [leinjacker.deps :as deps]
-            [leiningen.compile :as compile]
             [clojure.java.io :as io])
   (:import [java.util.jar JarFile JarEntry]))
 
