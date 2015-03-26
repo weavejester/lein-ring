@@ -199,7 +199,7 @@
           (distinct (concat [(:war-resources-path project "war-resources")]
                             (:war-resource-paths project)))))
 
-(defn write-war [project war-path]
+(defn write-war [project war-path & [additional-writes]]
   (with-open [war-stream (create-war project war-path)]
     (doto war-stream
       (str-entry "WEB-INF/web.xml" (make-web-xml project))
@@ -209,6 +209,8 @@
       (dir-entry war-stream project "WEB-INF/classes/" path))
     (doseq [path (war-resources-paths project)]
       (dir-entry war-stream project "" path))
+    (when additional-writes
+      (additional-writes war-stream project))
     war-stream))
 
 (defn add-servlet-dep [project]
@@ -220,16 +222,17 @@
   "Create a $PROJECT-$VERSION.war file."
   ([project]
      (war project (default-war-name project)))
-  ([project war-name]
+  ([project war-name & {:keys [profiles-to-merge additional-writes]}]
      (ensure-handler-set! project)
       (let [project (-> project
                         (unmerge-profiles [:default])
+                        (merge-profiles profiles-to-merge)
                         add-servlet-dep)
            result  (compile/compile project)]
        (when-not (and (number? result) (pos? result))
          (let [war-path (war-file-path project war-name)]
            (compile-servlet project)
            (compile-listener project)
-           (write-war project war-path)
+           (write-war project war-path additional-writes)
            (println "Created" war-path)
            war-path)))))
