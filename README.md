@@ -91,7 +91,8 @@ The following options affect the behavior of the web server started by
 
 * `:stacktraces?` -
   If true, display a stacktrace when an exception is thrown.
-  Defaults to true in development mode, false in production.
+  Defaults to true for server or server-headless tasks. Ignored
+  (always false) for generated artifacts.
 
 * `:stacktrace-middleware` -
   A symbol referencing the middleware to use for reporting
@@ -99,7 +100,8 @@ The following options affect the behavior of the web server started by
 
 * `:auto-reload?` -
   If true, automatically reload modified source files. Defaults to
-  true in development mode, false in production.
+  true for server or server-headless tasks. Ignored (always false) for
+  generated artifacts.
 
 * `:reload-paths` -
   A collection of directory paths that can trigger a reload. By
