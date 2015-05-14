@@ -52,10 +52,13 @@
      ~@(map #(if (symbol? %) (list 'var %) %) middleware)))
 
 (defn start-nrepl-expr [project]
-  (let [port (-> project :ring :nrepl (:port 0))
+  (let [nrepl-opts (-> project :ring :nrepl)
+        port (:port nrepl-opts 0)
+        bind (:bind nrepl-opts)
         handler (nrepl-handler (nrepl-middleware project))]
     `(let [{port# :port} (clojure.tools.nrepl.server/start-server
                           :port ~port
+                          :bind ~bind
                           :handler ~handler)]
        (doseq [port-file# ["target/repl-port" ".nrepl-port"]]
          (-> port-file#
