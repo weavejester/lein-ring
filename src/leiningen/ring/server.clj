@@ -54,7 +54,7 @@
 (defn start-nrepl-expr [project]
   (let [nrepl-opts (-> project :ring :nrepl)
         port (:port nrepl-opts 0)
-        bind (:bind nrepl-opts)
+        bind (:host nrepl-opts)
         handler (nrepl-handler (nrepl-middleware project))]
     `(let [{port# :port} (clojure.tools.nrepl.server/start-server
                           :port ~port

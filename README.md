@@ -112,10 +112,10 @@ The following options affect the behavior of the web server started by
   files are modified. Defaults to false.
 
 * `:nrepl` -
-  A map of `:start?` and (optionally) `:port` and `:bind` keys. If
+  A map of `:start?` and (optionally) `:port` and `:host` keys. If
   `:start?` is true, open up an nREPL server on the given
   port. `:start?` defaults to false, `:port` defaults to an arbitrary
-  free port, and `:bind` defaults to `"localhost"`.  __NOTE: This
+  free port, and `:host` defaults to `"localhost"`.  __NOTE: This
   option is only for development with the `lein ring server` task.
   Setting this option will not cause a generated uberjar/uberwar to
   run an nREPL server.  If you would like to run an nREPL server in
