@@ -123,7 +123,9 @@
   (if (get-in project [:ring :servlet-path-info?] true)
     `(let [handler# ~(generate-resolve handler-sym)]
        (fn [request#]
-         (let [context# ^String (.getContextPath (:servlet-request request#))]
+         (let [context# (.getContextPath
+                          ^javax.servlet.http.HttpServletRequest
+                          (:servlet-request request#))]
            (handler#
             (assoc request#
               :context context#
