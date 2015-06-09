@@ -50,7 +50,9 @@
   (let [out-file (source-file project namespace)]
     (.mkdirs (.getParentFile out-file))
     (with-open [out (io/writer out-file)]
-      (binding [*out* out] (prn form))))
+      (binding [*out* out
+                *print-meta* true]
+        (prn form))))
   (eval-in-project project
     `(do (clojure.core/compile '~namespace) nil)
     nil))
