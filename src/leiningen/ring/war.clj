@@ -139,7 +139,8 @@
              (:gen-class :extends javax.servlet.http.HttpServlet))
            (def ~'service-method)
            (defn ~'-service [servlet# request# response#]
-             (~'service-method servlet# request# response#))))))
+             (~'service-method servlet# request# response#)))
+      :print-meta true)))
 
 (defn compile-listener [project]
   (let [init-sym    (get-in project [:ring :init])
@@ -165,7 +166,8 @@
                        (constantly method#))))
                  (defn ~'-contextDestroyed [this# ~servlet-context-event]
                    ~(if destroy-sym
-                      `(~(generate-resolve destroy-sym))))))))))
+                      `(~(generate-resolve destroy-sym)))))))
+      :print-meta true)))
 
 (defn create-war [project file-path]
   (-> (FileOutputStream. file-path)

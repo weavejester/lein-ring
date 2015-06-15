@@ -39,7 +39,7 @@
 
 (defn compile-form
   "Compile the supplied form into the target directory."
-  [project namespace form]
+  [project namespace form & {:keys [print-meta]}]
   ;; We need to ensure that deps has already run before we write anything
   ;; to :target-dir, which is otherwise cleaned by deps if it runs for
   ;; the first time as a side effect of eval-in-project Ideally,
@@ -51,7 +51,7 @@
     (.mkdirs (.getParentFile out-file))
     (with-open [out (io/writer out-file)]
       (binding [*out* out
-                *print-meta* true]
+                *print-meta* print-meta]
         (prn form))))
   (eval-in-project project
     `(do (clojure.core/compile '~namespace) nil)
