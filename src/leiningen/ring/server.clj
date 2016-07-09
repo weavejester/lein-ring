@@ -30,7 +30,9 @@
   (update-project project deps/add-if-missing dep))
 
 (defn add-server-dep [project]
-  (add-dep project '[ring-server/ring-server "0.4.0"]))
+  (-> project
+      (add-dep '[ring "1.5.0"])
+      (add-dep '[ring-server/ring-server "0.4.0"])))
 
 (defn start-server-expr [project]
   `(ring.server.leiningen/serve '~(select-keys project [:ring])))
