@@ -146,6 +146,7 @@
   (let [init-sym    (get-in project [:ring :init])
         destroy-sym (get-in project [:ring :destroy])
         handler-sym (get-in project [:ring :handler])
+        async?      (get-in project [:ring :async?])
         servlet-ns  (servlet-ns project)
         project-ns  (symbol (listener-ns project))]
     (assert-vars-exist project init-sym destroy-sym handler-sym)
@@ -160,7 +161,7 @@
                    (let [handler# ~(generate-handler project handler-sym)
                          make-service-method# ~(generate-resolve
                                                  'ring.util.servlet/make-service-method)
-                         method# (make-service-method# handler#)]
+                         method# (make-service-method# handler# ~@(when async? [{:async? true}]))]
                      (alter-var-root
                        ~(generate-resolve (symbol servlet-ns "service-method"))
                        (constantly method#))))
