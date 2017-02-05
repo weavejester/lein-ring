@@ -46,6 +46,9 @@ your `project.clj` file:
   A map of options to be passed to the Ring adapter. This has no
   effect if you're deploying your application as a war-file.
 
+* `:async?` -
+  If true, treat handler as an async handler. Default false.
+
 
 ## Environment variables
 
