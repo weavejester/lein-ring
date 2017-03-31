@@ -112,7 +112,8 @@ The following options affect the behavior of the web server started by
 
 * `:auto-refresh?` -
   If true, automatically refresh the browser when source or resource
-  files are modified. Defaults to false.
+  files are modified. Defaults to false. Ignored (always false) for
+  generated artifacts.
 
 * `:nrepl` -
   A map of `:start?` and (optionally) `:port` and `:host` keys. If
