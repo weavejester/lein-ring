@@ -18,7 +18,8 @@
         options (-> (select-keys project [:ring])
                     (assoc-in [:ring :open-browser?] false)
                     (assoc-in [:ring :stacktraces?] false)
-                    (assoc-in [:ring :auto-reload?] false))]
+                    (assoc-in [:ring :auto-reload?] false)
+                    (assoc-in [:ring :auto-refresh?] false))]
     (compile-form project main-ns
       `(do (ns ~main-ns
              (:gen-class))
