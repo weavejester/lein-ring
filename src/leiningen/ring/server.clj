@@ -31,7 +31,7 @@
 
 (defn add-server-dep [project]
   (-> project
-      (add-dep '[ring "1.5.1"])
+      (add-dep '[ring "1.6.0"])
       (add-dep '[ring-server/ring-server "0.4.0"])))
 
 (defn start-server-expr [project]
