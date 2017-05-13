@@ -220,7 +220,7 @@
 
 (defn add-servlet-dep [project]
   (-> project
-      (deps/add-if-missing '[ring/ring-servlet "1.6.1"])
+      (deps/add-if-missing ['ring/ring-servlet ring-version])
       (deps/add-if-missing '[javax.servlet/javax.servlet-api "3.1.0"])))
 
 (defn war

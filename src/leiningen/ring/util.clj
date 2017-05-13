@@ -85,3 +85,5 @@
                          (lju/try-resolve 'leiningen.core.project/merge-profiles))]
     (merge-fn project profiles)
     project))
+
+(def ring-version "1.6.1")

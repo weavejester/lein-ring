@@ -3,7 +3,7 @@
             [leiningen.core.classpath :as classpath]
             [clojure.java.io :as io])
   (:use [leinjacker.eval :only (eval-in-project)]
-        [leiningen.ring.util :only (ensure-handler-set! update-project)]))
+        [leiningen.ring.util :only (ensure-handler-set! update-project ring-version)]))
 
 (defn classpath-dirs
   "list of all dirs on the leiningen classpath"
@@ -31,7 +31,7 @@
 
 (defn add-server-dep [project]
   (-> project
-      (add-dep '[ring "1.6.1"])
+      (add-dep ['ring ring-version])
       (add-dep '[ring-server/ring-server "0.4.0"])))
 
 (defn start-server-expr [project]
