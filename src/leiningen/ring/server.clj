@@ -32,7 +32,7 @@
 (defn add-server-dep [project]
   (-> project
       (add-dep ['ring ring-version])
-      (add-dep '[ring-server/ring-server "0.4.0"])))
+      (add-dep '[ring-server/ring-server "0.5.0"])))
 
 (defn start-server-expr [project]
   `(ring.server.leiningen/serve '~(select-keys project [:ring])))
