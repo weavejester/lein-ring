@@ -39,7 +39,7 @@ your `project.clj` file:
 * `:destroy` -
   A function called before your handler exits or is unloaded. It
   should take no arguments. If your Ring application has been compiled
-  into a war-file, then this will be called when your hander servlet
+  into a war-file, then this will be called when your handler servlet
   is destroyed.
 
 * `:adapter` -
