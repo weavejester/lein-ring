@@ -3,6 +3,7 @@
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
             [leiningen.deps]
+            [leiningen.core.main :as lein-core]
             [leinjacker.utils :as lju]))
 
 (defn find-namespaces [var-syms]
@@ -28,7 +29,7 @@
      (str "Missing Ring :handler option in project map.\n\n"
           "You need to have a line in your project.clj file that looks like:\n"
           "  :ring {:handler your.app/handler}"))
-    (System/exit 1)))
+    (lein-core/exit 1)))
 
 (defn source-file [project namespace]
   (io/file (:compile-path project)
