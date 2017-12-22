@@ -27,8 +27,8 @@
              (~(generate-resolve 'ring.server.leiningen/serve) '~options))))))
 
 (defn add-main-to-aot [aot-list main-ns]
-  (if (= aot-list :all)
-    aot-list
+  (if (#{:all [:all]} aot-list)
+    [:all]
     (-> aot-list (conj main-ns) distinct)))
 
 (defn add-main-class [project]
