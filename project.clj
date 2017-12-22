@@ -1,4 +1,4 @@
-(defproject lein-ring "0.12.2"
+(defproject lein-ring "0.12.3"
   :description "Leiningen Ring plugin"
   :url "https://github.com/weavejester/lein-ring"
   :scm {:name "git"
