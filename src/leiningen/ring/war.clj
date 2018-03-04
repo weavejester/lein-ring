@@ -4,16 +4,15 @@
              :refer [make-manifest]]
             [clojure.java.io :as io]
             [clojure.string :as string]
-            [leinjacker.utils :as lju]
             [leinjacker.deps :as deps])
   (:use [clojure.data.xml :only [sexp-as-element indent-str]]
         leiningen.ring.util)
-  (:import [java.util.jar Manifest
-                          JarEntry
+  (:import [java.util.jar JarEntry
                           JarOutputStream]
            [java.io BufferedOutputStream
                     FileOutputStream
-                    ByteArrayInputStream]))
+                    ByteArrayInputStream
+                    File]))
 
 (defn default-war-name [project]
   (or (get-in project [:ring :war-name])
@@ -175,9 +174,14 @@
       (BufferedOutputStream.)
       (JarOutputStream. (make-manifest project))))
 
-(defn write-entry [war war-path entry]
+(defmulti write-entry (fn [war _ _] (class war)))
+(defmethod write-entry JarOutputStream [war war-path entry]
   (.putNextEntry war (JarEntry. war-path))
   (io/copy entry war))
+(defmethod write-entry File [war-dir war-path file-or-data]
+  (let [to-file (io/file war-dir war-path)]
+    (io/make-parents to-file)
+    (io/copy file-or-data to-file)))
 
 (defn str-entry [war war-path content]
   (write-entry war war-path (to-byte-stream content)))
@@ -204,19 +208,28 @@
           (distinct (concat [(:war-resources-path project "war-resources")]
                             (:war-resource-paths project)))))
 
-(defn write-war [project war-path & [additional-writes]]
-  (with-open [war-stream (create-war project war-path)]
-    (doto war-stream
-      (str-entry "WEB-INF/web.xml" (make-web-xml project))
-      (dir-entry project "WEB-INF/classes/" (:compile-path project)))
-    (doseq [path (source-and-resource-paths project)
-            :when path]
-      (dir-entry war-stream project "WEB-INF/classes/" path))
-    (doseq [path (war-resources-paths project)]
-      (dir-entry war-stream project "" path))
-    (when additional-writes
-      (additional-writes war-stream project))
-    war-stream))
+(defn write-war [war project & [additional-writes]]
+  (doto war
+    (str-entry "WEB-INF/web.xml" (make-web-xml project))
+    (dir-entry project "WEB-INF/classes/" (:compile-path project)))
+  (doseq [path (source-and-resource-paths project)
+          :when path]
+    (dir-entry war project "WEB-INF/classes/" path))
+  (doseq [path (war-resources-paths project)]
+    (dir-entry war project "" path))
+  (when additional-writes
+    (additional-writes war project))
+  war)
+
+(defn prepare-war [project war-path & [additional-writes]]
+  (if (get-in project [:ring :exploded])
+    (let [war-dir (io/as-file war-path)]
+      (.mkdirs (io/file war-dir "META-INF"))
+      (with-open [manifest-stream (io/output-stream (io/file war-dir "META-INF/MANIFEST.MF"))]
+        (.write (make-manifest project) manifest-stream))
+      (write-war war-dir project additional-writes))
+    (with-open [war-stream (create-war project war-path)]
+      (write-war war-stream project additional-writes))))
 
 (defn add-servlet-dep [project]
   (-> project
@@ -238,6 +251,6 @@
          (let [war-path (war-file-path project war-name)]
            (compile-servlet project)
            (compile-listener project)
-           (write-war project war-path additional-writes)
+           (prepare-war project war-path additional-writes)
            (println "Created" war-path)
            war-path)))))
