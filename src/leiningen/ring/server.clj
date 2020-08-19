@@ -42,7 +42,7 @@
 
 (defn add-optional-nrepl-dep [project]
   (if (nrepl? project)
-    (add-dep project '[org.clojure/tools.nrepl "0.2.3"])
+    (add-dep project '[nrepl "0.6.0"])
     project))
 
 (defn nrepl-middleware [project]
@@ -50,7 +50,7 @@
       (-> project :repl-options :nrepl-middleware)))
 
 (defn nrepl-handler [middleware]
-  `(clojure.tools.nrepl.server/default-handler
+  `(nrepl.server/default-handler
      ~@(map #(if (symbol? %) (list 'var %) %) middleware)))
 
 (defn start-nrepl-expr [project]
@@ -58,7 +58,7 @@
         port (:port nrepl-opts 0)
         bind (:host nrepl-opts)
         handler (nrepl-handler (nrepl-middleware project))]
-    `(let [{port# :port} (clojure.tools.nrepl.server/start-server
+    `(let [{port# :port} (nrepl.server/start-server
                           :port ~port
                           :bind ~bind
                           :handler ~handler)]
@@ -84,7 +84,7 @@
      (apply load-namespaces
             (conj (into
                    ['ring.server.leiningen
-                    (if (nrepl? project) 'clojure.tools.nrepl.server)]
+                    (if (nrepl? project) 'nrepl.server)]
                    (if (nrepl? project) (nrepl-middleware project)))
                   (-> project :ring :handler)
                   (-> project :ring :init)
