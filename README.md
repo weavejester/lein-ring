@@ -111,9 +111,12 @@ The following options affect the behavior of the web server started by
   default this takes all directories in the project classpath.
 
 * `:auto-refresh?` -
-  If true, automatically refresh the browser when source or resource
-  files are modified. Defaults to false. Ignored (always false) for
-  generated artifacts.
+  If true, automatically refresh the browser when files are modified.
+  Defaults to false. Ignored (always false) for generated artifacts.
+
+* `:refresh-paths` -
+  A collection of directory paths that can trigger a refresh.
+  Defaults to monitoring the `src` and `resources` directories.
 
 * `:nrepl` -
   A map of `:start?` and (optionally) `:port` and `:host` keys. If
