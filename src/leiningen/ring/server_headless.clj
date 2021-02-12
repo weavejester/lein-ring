@@ -6,4 +6,4 @@
   ([project]
      (server-task project {:open-browser? false}))
   ([project port]
-     (server-task project {:port (Integer. port), :open-browser? false})))
+     (server-task project {:port (int port), :open-browser? false})))

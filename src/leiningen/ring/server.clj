@@ -64,7 +64,7 @@
                           :handler ~handler)]
        (doseq [port-file# ["target/repl-port" ".nrepl-port"]]
          (-> port-file#
-             java.io.File.
+             io/file
              (doto .deleteOnExit)
              (spit port#)))
        (println "Started nREPL server on port" port#))))
@@ -95,4 +95,4 @@
   ([project]
      (server-task project {}))
   ([project port]
-     (server-task project {:port (Integer. port)})))
+     (server-task project {:port (int port)})))

@@ -23,7 +23,7 @@
     (.mkdirs (io/file target-dir))
     (str target-dir "/" war-name)))
 
-(defn skip-file? [project war-path file]
+(defn skip-file? [project war-path ^java.io.File file]
   (or (re-find #"^\.?#" (.getName file))
       (re-find #"~$" (.getName file))
       (some #(re-find % war-path)
@@ -169,14 +169,15 @@
                       `(~(generate-resolve destroy-sym)))))))
       :print-meta true)))
 
-(defn create-war [project file-path]
+(defn create-war
+  ^JarOutputStream [project ^String file-path]
   (-> (FileOutputStream. file-path)
       (BufferedOutputStream.)
       (JarOutputStream. (make-manifest project))))
 
 (defmulti write-entry (fn [war _ _] (class war)))
 (defmethod write-entry JarOutputStream [war war-path entry]
-  (.putNextEntry war (JarEntry. war-path))
+  (.putNextEntry ^JarOutputStream war (JarEntry. ^String war-path))
   (io/copy entry war))
 (defmethod write-entry File [war-dir war-path file-or-data]
   (let [to-file (io/file war-dir war-path)]
@@ -186,13 +187,13 @@
 (defn str-entry [war war-path content]
   (write-entry war war-path (to-byte-stream content)))
 
-(defn in-war-path [war-path root file]
+(defn in-war-path [war-path root ^java.io.File file]
   (str war-path
        (-> (.toURI (io/file root))
            (.relativize (.toURI file))
            (.getPath))))
 
-(defn file-entry [war project war-path file]
+(defn file-entry [war project ^String war-path ^java.io.File file]
   (when (and (.exists file)
              (.isFile file)
              (not (skip-file? project war-path file)))

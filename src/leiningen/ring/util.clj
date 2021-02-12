@@ -31,7 +31,8 @@
           "  :ring {:handler your.app/handler}"))
     (lein-core/exit 1)))
 
-(defn source-file [project namespace]
+(defn source-file
+  ^java.io.File [project namespace]
   (io/file (:compile-path project)
            (-> (str namespace)
                (str/replace "-" "_")
