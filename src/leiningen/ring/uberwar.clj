@@ -52,7 +52,8 @@
    $GROUP-$ARTIFACT-$VERSION.jar (see `war-path-for-jar`), otherwise using their original filename."
   [war project]
   (doseq [jar-file (jar-dependencies project)]
-    (war/file-entry war project (war-path-for-jar jar-file) jar-file)))
+    (when-let [war-path (war-path-for-jar jar-file)]
+      (war/file-entry war project war-path jar-file))))
 
 (defn uberwar
   "Create a $PROJECT-$VERSION.war with dependencies."
