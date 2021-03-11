@@ -1,4 +1,4 @@
-(defproject dpiliouras/lein-ring "0.12.7-SNAPSHOT"
+(defproject dpiliouras/lein-ring "0.12.5"
   :description "Leiningen Ring plugin"
   :url "https://github.com/dpiliouras/lein-ring"
   :scm {:name "git"
