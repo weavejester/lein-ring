@@ -94,5 +94,5 @@
   "Start a Ring server and open a browser."
   ([project]
      (server-task project {}))
-  ([project port]
-     (server-task project {:port (int port)})))
+  ([project ^String port]
+     (server-task project {:port (Integer. port)})))
