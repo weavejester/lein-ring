@@ -3,8 +3,9 @@
             [clojure.java.io :as io]
             [clojure.string :as str])
   (:import [java.util.jar JarFile JarEntry]
-           (java.util Properties)
-           (java.net URL)))
+           [java.util Properties]
+           [java.net URL]
+           (java.io File)))
 
 (defn default-uberwar-name [project]
   (or (get-in project [:ring :uberwar-name])
@@ -14,18 +15,32 @@
 (defn get-classpath [project]
   (if-let [get-cp (resolve 'leiningen.core.classpath/get-classpath)]
     (get-cp project)
-    (->> (:library-path project) (io/file) .listFiles (map str))))
+    (->> (:library-path project) io/file .listFiles (map str))))
 
 (defn jar-dependencies [project]
   (for [pathname (get-classpath project)
         :when (str/ends-with? pathname ".jar")]
     (io/file pathname)))
 
-(def ^:private javax-servlet?  #{"javax/servlet/Servlet.class"})
-(def ^:private pom-properties? #(str/ends-with? % "pom.properties"))
+(def ^:private javax-servlet? #{"javax/servlet/Servlet.class"})
 
-(defn- war-path-for-jar
-  [^java.io.File jar]
+(defn- pom-properties? [file-name]
+  (str/ends-with? file-name "pom.properties"))
+
+(defn- read-jar-pom-properties [^String full-path]
+  (with-open [in (.openStream (URL. full-path))]
+    (->> (doto (Properties.) (.load in))
+         (into {}))))
+
+(defn- try-pom-properties [^File jar pom-properties]
+  (let [pom-properties-full-path (some->> pom-properties (str "jar:file:" (.getAbsolutePath jar) "!/"))
+        {:strs [groupId artifactId version]} (some-> pom-properties-full-path read-jar-pom-properties)]
+    (->> (if (and groupId artifactId version)
+           [groupId \- artifactId \- version ".jar"] ;; found pom.properties - reconstruct the jar name to avoid collisions (issue #216)
+           [(.getName jar)])                         ;; fallback to using the original jar name (best-effort approach)
+         (apply str "WEB-INF/lib/"))))
+
+(defn- war-path-for-jar [^File jar]
   (with-open [jar-file (JarFile. jar)]
     (let [javax&pom (->> (.entries jar-file)
                          enumeration-seq
@@ -35,18 +50,9 @@
       (when-not (some javax-servlet? javax&pom)
         ;; we've confirmed that one of the two possible files is missing,
         ;; so if we find one (via `first`), it will be the pom.properties
-        (let [pom-properties-full-path (some->> (first javax&pom)
-                                                (str "jar:file:" (.getAbsolutePath jar) "!/"))
-              {:strs [groupId artifactId version]} (when pom-properties-full-path
-                                                     (with-open [in (.openStream (URL. pom-properties-full-path))]
-                                                       (->> (doto (Properties.) (.load in))
-                                                            (into {}))))]
-          (->> (if (and groupId artifactId version)
-                 [groupId \- artifactId \- version ".jar"] ;; found pom.properties - reconstruct the jar name to avoid collisions (issue #216)
-                 [(.getName jar)])                         ;; fallback to using the original jar name (best-effort approach)
-               (apply str "WEB-INF/lib/")))))))
+        (try-pom-properties jar (first javax&pom))))))
 
-(defn jar-entries
+(defn- jar-entries
   "Populates the 'WEB-INF/lib/' directory of the given <war> with this project's dependencies (jars).
    If these contain a 'pom.properties' file, they will be copied into the war named as
    $GROUP-$ARTIFACT-$VERSION.jar (see `war-path-for-jar`), otherwise using their original filename."

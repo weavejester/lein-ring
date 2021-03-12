@@ -5,5 +5,5 @@
   "Start a Ring server without opening a browser."
   ([project]
      (server-task project {:open-browser? false}))
-  ([project port]
-     (server-task project {:port (int port), :open-browser? false})))
+  ([project ^String port]
+     (server-task project {:port (Integer. port), :open-browser? false})))
