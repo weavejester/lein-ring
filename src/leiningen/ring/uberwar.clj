@@ -32,13 +32,15 @@
     (->> (doto (Properties.) (.load in))
          (into {}))))
 
-(defn- try-pom-properties [^File jar pom-properties]
-  (let [pom-properties-full-path (some->> pom-properties (str "jar:file:" (.getAbsolutePath jar) "!/"))
-        {:strs [groupId artifactId version]} (some-> pom-properties-full-path read-jar-pom-properties)]
-    (->> (if (and groupId artifactId version)
-           [groupId \- artifactId \- version ".jar"] ;; found pom.properties - reconstruct the jar name to avoid collisions (issue #216)
-           [(.getName jar)])                         ;; fallback to using the original jar name (best-effort approach)
-         (apply str "WEB-INF/lib/"))))
+(defn- from-pom-properties
+  "Returns a jar name which includes the groupId, artifactId, & version,
+   as read by the pom.properties file inside the jar file found at <jar-path>."
+  [jar-path pom-properties-jar-path]
+  (let [pom-properties-full-path (str "jar:file:" jar-path "!/" pom-properties-jar-path)
+        {:strs [groupId artifactId version]} (read-jar-pom-properties pom-properties-full-path)]
+    (when (and groupId artifactId version)
+      ;; found pom.properties - reconstruct the jar name to avoid collisions (issue #216)
+      (str groupId \- artifactId \- version ".jar"))))
 
 (defn- war-path-for-jar [^File jar]
   (with-open [jar-file (JarFile. jar)]
@@ -50,7 +52,11 @@
       (when-not (some javax-servlet? javax&pom)
         ;; we've confirmed that one of the two possible files is missing,
         ;; so if we find one (via `first`), it will be the pom.properties
-        (try-pom-properties jar (first javax&pom))))))
+        (str "WEB-INF/lib/"
+             (or (some->> (first javax&pom)
+                          (from-pom-properties (.getAbsolutePath jar)))
+                 ;; fallback to using the original jar name (best-effort approach)
+                 (.getName jar)))))))
 
 (defn- jar-entries
   "Populates the 'WEB-INF/lib/' directory of the given <war> with this project's dependencies (jars).
