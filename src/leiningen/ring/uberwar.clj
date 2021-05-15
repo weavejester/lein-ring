@@ -22,45 +22,43 @@
         :when (str/ends-with? pathname ".jar")]
     (io/file pathname)))
 
-(def ^:private javax-servlet? #{"javax/servlet/Servlet.class"})
+(defn- contains-javax-servlet-class? [^JarFile jar-file]
+  (some? (.getEntry jar-file "javax/servlet/Servlet.class")))
 
-(defn- pom-properties? [file-name]
-  (str/ends-with? file-name "pom.properties"))
+(defn- pom-properties? [^JarEntry entry]
+  (when (-> (.getName entry)
+            (str/ends-with? "pom.properties"))
+    entry))
 
-(defn- read-jar-pom-properties [^String full-path]
-  (with-open [in (.openStream (URL. full-path))]
+(defn- read-jar-pom-properties
+  [^JarFile jar-file ^JarEntry pom-properties]
+  (with-open [in (.getInputStream jar-file pom-properties)]
     (->> (doto (Properties.) (.load in))
          (into {}))))
 
 (defn- jar-name-from-pom-properties
-  [jar-path pom-properties-jar-path]
-  (let [pom-properties-full-path (str "jar:file:"
-                                      jar-path "!/"
-                                      pom-properties-jar-path)
-        {:strs [groupId artifactId version]} (read-jar-pom-properties
-                                               pom-properties-full-path)]
+  [^JarFile jar-file ^JarEntry pom-properties]
+  (let [{:strs [groupId artifactId version]} (read-jar-pom-properties
+                                               jar-file
+                                               pom-properties)]
     (when (and groupId artifactId version)
       (str groupId \- artifactId \- version ".jar"))))
 
 (defn- war-path-for-jar [^File jar]
   (with-open [jar-file (JarFile. jar)]
-    (let [javax&pom (->> (.entries jar-file)
-                         enumeration-seq
-                         (map (fn [^JarEntry je] (.getName je)))
-                         (filter (some-fn javax-servlet? pom-properties?)))] ;; 2 elements maximum
-      ;; Servlet container will have it's own servlet-api impl
-      (when-not (some javax-servlet? javax&pom)
-        (str "WEB-INF/lib/"
-             (or (some->> (first javax&pom)
-                          (jar-name-from-pom-properties (.getAbsolutePath jar)))
-                 ;; fallback to using the original jar name (best-effort approach)
-                 (.getName jar)))))))
+    ;; Servlet container will have it's own servlet-api impl
+    (when-not (contains-javax-servlet-class? jar-file)
+      (let [jar-entries (enumeration-seq (.entries jar-file))
+            name-from-pom (some->> (some pom-properties? jar-entries)
+                                   (jar-name-from-pom-properties jar-file))]
+        (->> (or name-from-pom (.getName jar))
+             (str "WEB-INF/lib/"))))))
 
 (defn- populate-war-with-dependent-jars
   [war project]
-  (doseq [jar-file (jar-dependencies project)]
-    (when-let [war-path (war-path-for-jar jar-file)]
-      (war/file-entry war project war-path jar-file))))
+  (doseq [jar (jar-dependencies project)]
+    (when-let [war-path (war-path-for-jar jar)]
+      (war/file-entry war project war-path jar))))
 
 (defn uberwar
   "Create a $PROJECT-$VERSION.war with dependencies."
