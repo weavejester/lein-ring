@@ -24,12 +24,12 @@
 (defn- contains-javax-servlet-class? [^JarFile jar-file]
   (some? (.getEntry jar-file "javax/servlet/Servlet.class")))
 
-(defn- pom-properties? [^JarEntry entry]
+(defn- pom-properties* [^JarEntry entry]
   (when (str/ends-with? (.getName entry) "pom.properties")
     entry))
 
 (defn- find-pom-properties [^JarFile jar-file]
-  (->> jar-file .entries enumeration-seq (some pom-properties?)))
+  (->> jar-file .entries enumeration-seq (some pom-properties*)))
 
 (defn- read-jar-pom-properties
   [^JarFile jar-file ^JarEntry pom-properties]
