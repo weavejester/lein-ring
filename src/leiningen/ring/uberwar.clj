@@ -50,7 +50,7 @@
 
 (defn- war-path-for-jar [^File jar]
   (with-open [jar-file (JarFile. jar)]
-    ;; Servlet container will have it's own servlet-api impl
+    ;; Servlet container will have its own servlet-api implementation
     (when-not (contains-javax-servlet-class? jar-file)
       (let [name-from-pom (some->> (find-pom-properties jar-file)
                                    (jar-name-from-pom-properties jar-file))]
