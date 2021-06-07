@@ -4,8 +4,7 @@
             [clojure.string :as str])
   (:import [java.util.jar JarFile JarEntry]
            [java.util Properties]
-           [java.net URL]
-           (java.io File)))
+           [java.io File]))
 
 (defn default-uberwar-name [project]
   (or (get-in project [:ring :uberwar-name])
@@ -30,17 +29,22 @@
             (str/ends-with? "pom.properties"))
     entry))
 
+(defn- pom-properties? [^JarEntry entry]
+  (when (str/ends-with? (.getName entry) "pom.properties")
+    entry))
+
+(defn- find-pom-properties [^JarFile jar-file]
+  (->> jar-file .entries enumeration-seq (some pom-properties?)))
+
 (defn- read-jar-pom-properties
   [^JarFile jar-file ^JarEntry pom-properties]
   (with-open [in (.getInputStream jar-file pom-properties)]
-    (->> (doto (Properties.) (.load in))
-         (into {}))))
+    (into {} (doto (Properties.) (.load in)))))
 
 (defn- jar-name-from-pom-properties
   [^JarFile jar-file ^JarEntry pom-properties]
-  (let [{:strs [groupId artifactId version]} (read-jar-pom-properties
-                                               jar-file
-                                               pom-properties)]
+  (let [{:strs [groupId artifactId version]}
+        (read-jar-pom-properties jar-file pom-properties)]
     (when (and groupId artifactId version)
       (str groupId \- artifactId \- version ".jar"))))
 
@@ -48,14 +52,12 @@
   (with-open [jar-file (JarFile. jar)]
     ;; Servlet container will have it's own servlet-api impl
     (when-not (contains-javax-servlet-class? jar-file)
-      (let [jar-entries (enumeration-seq (.entries jar-file))
-            name-from-pom (some->> (some pom-properties? jar-entries)
+      (let [name-from-pom (some->> (find-pom-properties jar-file)
                                    (jar-name-from-pom-properties jar-file))]
         (->> (or name-from-pom (.getName jar))
              (str "WEB-INF/lib/"))))))
 
-(defn- populate-war-with-dependent-jars
-  [war project]
+(defn- populate-war-with-dependent-jars [war project]
   (doseq [jar (jar-dependencies project)]
     (when-let [war-path (war-path-for-jar jar)]
       (war/file-entry war project war-path jar))))
@@ -69,4 +71,3 @@
        project war-name
        :profiles-to-merge [:uberjar]
        :additional-writes populate-war-with-dependent-jars)))
-

@@ -5,7 +5,7 @@
             [leiningen.deps]
             [leiningen.core.main :as lein-core]
             [leinjacker.utils :as lju])
-  (:import (java.io File)))
+  (:import [java.io File]))
 
 (defn find-namespaces [var-syms]
   (->> (remove nil? var-syms)
@@ -32,8 +32,7 @@
           "  :ring {:handler your.app/handler}"))
     (lein-core/exit 1)))
 
-(defn source-file
-  ^File [project namespace]
+(defn source-file ^File [project namespace]
   (io/file (:compile-path project)
            (-> (str namespace)
                (str/replace "-" "_")
