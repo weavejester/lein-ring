@@ -25,11 +25,6 @@
   (some? (.getEntry jar-file "javax/servlet/Servlet.class")))
 
 (defn- pom-properties? [^JarEntry entry]
-  (when (-> (.getName entry)
-            (str/ends-with? "pom.properties"))
-    entry))
-
-(defn- pom-properties? [^JarEntry entry]
   (when (str/ends-with? (.getName entry) "pom.properties")
     entry))
 
