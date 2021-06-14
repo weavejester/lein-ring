@@ -1,7 +1,10 @@
 (ns leiningen.ring.uberwar
   (:require [leiningen.ring.war :as war]
-            [clojure.java.io :as io])
-  (:import [java.util.jar JarFile JarEntry]))
+            [clojure.java.io :as io]
+            [clojure.string :as str])
+  (:import [java.util.jar JarFile JarEntry]
+           [java.util Properties]
+           [java.io File]))
 
 (defn default-uberwar-name [project]
   (or (get-in project [:ring :uberwar-name])
@@ -13,26 +16,46 @@
     (get-cp project)
     (->> (:library-path project) io/file .listFiles (map str))))
 
-(defn contains-entry? [^java.io.File file ^String entry]
-  (with-open [jar-file (JarFile. file)]
-    (some (partial = entry)
-          (map #(.getName ^JarEntry %)
-               (enumeration-seq (.entries jar-file))))))
-
 (defn jar-dependencies [project]
   (for [pathname (get-classpath project)
-        :let [file (io/file pathname)
-              fname (.getName file)]
-        :when (and (.endsWith fname ".jar")
-                   ;; Servlet container will have it's own servlet-api impl
-                   (not (contains-entry? file "javax/servlet/Servlet.class")))]
-    file))
+        :when (str/ends-with? pathname ".jar")]
+    (io/file pathname)))
 
-(defn jar-entries [war project]
-  (doseq [jar-file (jar-dependencies project)]
-    (let [dir-path (.getParent jar-file)
-          war-path (war/in-war-path "WEB-INF/lib/" dir-path jar-file)]
-      (war/file-entry war project war-path jar-file))))
+(defn- contains-javax-servlet-class? [^JarFile jar-file]
+  (some? (.getEntry jar-file "javax/servlet/Servlet.class")))
+
+(defn- pom-properties* [^JarEntry entry]
+  (when (str/ends-with? (.getName entry) "pom.properties")
+    entry))
+
+(defn- find-pom-properties [^JarFile jar-file]
+  (->> jar-file .entries enumeration-seq (some pom-properties*)))
+
+(defn- read-jar-pom-properties
+  [^JarFile jar-file ^JarEntry pom-properties]
+  (with-open [in (.getInputStream jar-file pom-properties)]
+    (into {} (doto (Properties.) (.load in)))))
+
+(defn- jar-name-from-pom-properties
+  [^JarFile jar-file ^JarEntry pom-properties]
+  (let [{:strs [groupId artifactId version]}
+        (read-jar-pom-properties jar-file pom-properties)]
+    (when (and groupId artifactId version)
+      (str groupId \- artifactId \- version ".jar"))))
+
+(defn- war-path-for-jar [^File jar]
+  (with-open [jar-file (JarFile. jar)]
+    ;; Servlet container will have its own servlet-api implementation
+    (when-not (contains-javax-servlet-class? jar-file)
+      (let [name-from-pom (some->> (find-pom-properties jar-file)
+                                   (jar-name-from-pom-properties jar-file))]
+        (->> (or name-from-pom (.getName jar))
+             (str "WEB-INF/lib/"))))))
+
+(defn- populate-war-with-dependent-jars [war project]
+  (doseq [jar (jar-dependencies project)]
+    (when-let [war-path (war-path-for-jar jar)]
+      (war/file-entry war project war-path jar))))
 
 (defn uberwar
   "Create a $PROJECT-$VERSION.war with dependencies."
@@ -42,4 +65,4 @@
      (war/war
        project war-name
        :profiles-to-merge [:uberjar]
-       :additional-writes jar-entries)))
+       :additional-writes populate-war-with-dependent-jars)))
