@@ -35,7 +35,7 @@
         (not (coll? (second e1)))))
     (seq mf)))
 
-(defn make-manifest [project]
+(defn make-manifest ^Manifest [project]
   (let [project-manifest (into {} (:manifest project))]
     (->> project-manifest
          (merge

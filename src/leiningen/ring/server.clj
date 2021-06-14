@@ -64,7 +64,7 @@
                           :handler ~handler)]
        (doseq [port-file# ["target/repl-port" ".nrepl-port"]]
          (-> port-file#
-             java.io.File.
+             io/file
              (doto .deleteOnExit)
              (spit port#)))
        (println "Started nREPL server on port" port#))))
@@ -94,5 +94,5 @@
   "Start a Ring server and open a browser."
   ([project]
      (server-task project {}))
-  ([project port]
+  ([project ^String port]
      (server-task project {:port (Integer. port)})))
