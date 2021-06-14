@@ -132,13 +132,27 @@
     (generate-resolve handler-sym)))
 
 (defn compile-servlet [project]
-  (let [servlet-ns  (symbol (servlet-ns project))]
+  (let [servlet-ns  (symbol (servlet-ns project))
+        init-sym    (get-in project [:ring :servlet-init])
+        destroy-sym (get-in project [:ring :servlet-destroy])]
     (compile-form project servlet-ns
       `(do (ns ~servlet-ns
-             (:gen-class :extends javax.servlet.http.HttpServlet))
+             (:gen-class
+               :extends javax.servlet.http.HttpServlet
+               :exposes-methods {~'init    ~'superInit
+                                 ~'destroy ~'superDestroy})
+             (:import javax.servlet.http.HttpServlet))
            (def ~'service-method)
            (defn ~'-service [servlet# request# response#]
-             (~'service-method servlet# request# response#)))
+             (~'service-method servlet# request# response#))
+           (defn ~'-init [this# cfg#]
+             ~(if init-sym
+                `(~(generate-resolve init-sym)))
+             (. this# (~'superInit cfg#)))
+           (defn ~'-destroy [this#]
+             ~(if destroy-sym
+                `(~(generate-resolve destroy-sym)))
+             (. this# ~'superDestroy)))
       :print-meta true)))
 
 (defn compile-listener [project]
