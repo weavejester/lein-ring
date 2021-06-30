@@ -137,22 +137,24 @@
         destroy-sym (get-in project [:ring :servlet-destroy])]
     (compile-form project servlet-ns
       `(do (ns ~servlet-ns
-             (:gen-class
-               :extends javax.servlet.http.HttpServlet
+             (:gen-class :extends javax.servlet.http.HttpServlet
                :exposes-methods {~'init    ~'superInit
                                  ~'destroy ~'superDestroy})
              (:import javax.servlet.http.HttpServlet))
            (def ~'service-method)
            (defn ~'-service [servlet# request# response#]
              (~'service-method servlet# request# response#))
-           (defn ~'-init [this# cfg#]
-             ~(if init-sym
-                `(~(generate-resolve init-sym)))
-             (. this# (~'superInit cfg#)))
-           (defn ~'-destroy [this#]
-             ~(if destroy-sym
-                `(~(generate-resolve destroy-sym)))
-             (. this# ~'superDestroy)))
+
+           ~(if init-sym
+              `(defn ~'-init [this# cfg#]
+                 (. this# (~'superInit cfg#)) ;; super.init(cfg) first
+                 (~(generate-resolve init-sym))))
+
+           ~(if destroy-sym
+              `(defn ~'-destroy [this#]
+                 (~(generate-resolve destroy-sym))
+                 (. this# ~'superDestroy))) ;; super.destroy() second
+           )
       :print-meta true)))
 
 (defn compile-listener [project]
