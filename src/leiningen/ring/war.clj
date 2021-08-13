@@ -107,28 +107,41 @@
         (sexp-as-element
           [:web-app
            (get web-app-attrs
-                (get-in project [:ring :servlet-version] default-servlet-version)
+                (:servlet-version ring-options default-servlet-version)
                 {})
            [:listener
             [:listener-class (listener-class project)]]
            [:servlet
             [:servlet-name  (servlet-name project)]
-            [:servlet-class (servlet-class project)]]
+            [:servlet-class (servlet-class project)]
+            [:async-supported (:async? ring-options false)]]
            [:servlet-mapping
             [:servlet-name (servlet-name project)]
             [:url-pattern (url-pattern project)]]])))))
 
+(defn with-context-path-info [req context-path]
+  (assoc req
+    :context context-path
+    :path-info (-> (:uri req) (subs (count context-path)) not-empty (or "/"))))
+
 (defn generate-handler [project handler-sym]
   (if (get-in project [:ring :servlet-path-info?] true)
     `(let [handler# ~(generate-resolve handler-sym)]
-       (fn [request#]
-         (let [context# (.getContextPath
-                          ^javax.servlet.http.HttpServletRequest
-                          (:servlet-request request#))]
-           (handler#
-            (assoc request#
-              :context context#
-              :path-info (-> (:uri request#) (subs (.length context#)) not-empty (or "/")))))))
+       (fn
+         ([request# respond# raise#]
+          (let [context# (.getContextPath
+                           ^javax.servlet.http.HttpServletRequest
+                           (:servlet-request request#))]
+            (-> request#
+                (with-context-path-info context#)
+                (handler# respond# raise#))))
+         ([request#]
+          (let [context# (.getContextPath
+                           ^javax.servlet.http.HttpServletRequest
+                           (:servlet-request request#))]
+            (-> request#
+                (with-context-path-info context#)
+                (handler#))))))
     (generate-resolve handler-sym)))
 
 (defn compile-servlet [project]
