@@ -99,24 +99,45 @@
 
 (def default-servlet-version "2.5")
 
+(defn make-context-params
+  "Take this `params-map` and construct from it a sequence of
+  s-expression representations of context-param elements."
+  [params-map]
+  (if
+    (map? params-map)
+    (map
+      #(vector
+         :context-param
+         [:param-name (name %)]
+         [:param-value (params-map %)])
+      (keys params-map))))
+
+(defn make-web-sexpr
+  "Take this `project` and construct from it an s-expression
+  representation of the complete web.xml file"
+  [project]
+  (let [ring-options (:ring project)]
+    [:web-app
+     (get web-app-attrs
+          (get-in project [:ring :servlet-version] default-servlet-version)
+          {})
+     (make-context-params (:context-params ring-options))
+     [:listener
+      [:listener-class (listener-class project)]]
+     [:servlet
+      [:servlet-name  (servlet-name project)]
+      [:servlet-class (servlet-class project)]]
+     [:servlet-mapping
+      [:servlet-name (servlet-name project)]
+      [:url-pattern (url-pattern project)]]]))
+
 (defn make-web-xml [project]
   (let [ring-options (:ring project)]
     (if (contains? ring-options :web-xml)
       (slurp (:web-xml ring-options))
       (indent-str
         (sexp-as-element
-          [:web-app
-           (get web-app-attrs
-                (get-in project [:ring :servlet-version] default-servlet-version)
-                {})
-           [:listener
-            [:listener-class (listener-class project)]]
-           [:servlet
-            [:servlet-name  (servlet-name project)]
-            [:servlet-class (servlet-class project)]]
-           [:servlet-mapping
-            [:servlet-name (servlet-name project)]
-            [:url-pattern (url-pattern project)]]])))))
+          (make-web-sexpr project))))))
 
 (defn generate-handler [project handler-sym]
   (if (get-in project [:ring :servlet-path-info?] true)
