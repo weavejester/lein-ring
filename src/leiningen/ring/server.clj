@@ -22,6 +22,9 @@
              (symbol ns)
              s))))
 
+(defn default-re-resolve [project]
+  (update-in project [:ring :re-resolve] #(if (nil? %) true %)))
+
 (defn reload-paths [project]
   (or (get-in project [:ring :reload-paths])
       (classpath-dirs project)))
@@ -77,7 +80,7 @@
                     (assoc-in [:ring :reload-paths] (reload-paths project))
                     (update-in [:ring] merge options))]
     (eval-in-project
-     (-> project add-server-dep add-optional-nrepl-dep)
+     (-> project add-server-dep add-optional-nrepl-dep default-re-resolve)
      (if (nrepl? project)
        `(do ~(start-nrepl-expr project) ~(start-server-expr project))
        (start-server-expr project))
