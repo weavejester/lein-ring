@@ -42,7 +42,7 @@
 
 (defn add-optional-nrepl-dep [project]
   (if (nrepl? project)
-    (add-dep project '[nrepl "0.6.0"])
+    (add-dep project '[nrepl "1.0.0"])
     project))
 
 (defn nrepl-middleware [project]
